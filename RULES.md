@@ -1,39 +1,35 @@
-# 📜 Oraya Database Rules of Engagement
+# Oraya Database: Official Rules of Engagement
 
-Welcome to the **Oraya Database** community. By using, distributing, or contributing to this project, you agree to the following social and legal contract.
+**Version 2.0 — Effective Immediately**
 
----
-
-## 1. Branding & Identity (The "Oraya" Rule)
-The name **Oraya Database** is the core identity of this tool. 
-- **Preservation**: You must not remove, hide, or alter the "Oraya Database" name in the UI, login screens, or documentation.
-- **Naming Derivative Works**: If you create a fork or a based-on product, it must clearly state: *"Powered by Oraya Database"* or *"Based on Oraya Database"*.
-- **No False Origin**: You may not rename the core engine to imply that you are the original author of the Oraya technology.
-
-## 2. Licensing
-Oraya Database is released under the **Apache License 2.0**. 
-- It is free for personal, educational, and commercial use.
-- You must include the original `LICENSE` and `NOTICE` files in any redistribution.
-
-## 3. High-Performance Standards
-When extending Oraya Database, maintain the performance philosophy:
-- Minimize bundle size.
-- Ensure type safety with TypeScript.
-- Follow the "Speed-First" database interaction patterns established in the core.
-
-## 4. Ethical Use
-Oraya Database may not be used for:
-- Developing malware or illegal scanning tools.
-- Systems that violate human rights or engage in unauthorized surveillance.
-
-## 5. Community & Contributions
-We encourage everyone to improve Oraya. However:
-- All contributions are subject to the same Apache 2.0 license.
-- Maintain the premium aesthetics of the dashboard in any UI pull requests.
+By accessing, modifying, or distributing **Oraya Database** (the "Software"), you agree to be bound by the following Articles. These rules are designed to protect the integrity of the Oraya mission and ensure it remains a free resource for the global developer community.
 
 ---
 
-> [!IMPORTANT]
-> Failure to follow these rules, especially the Branding notice, constitutes a violation of the Apache 2.0 License (Section 4d & 6) and may lead to legal action or removal from the Oraya ecosystem.
+## Article 1: Branding & Identity Preservation
+The name **Oraya Database** and its associated branding are the sole identifiers of this technology.
+- **Section 1.1**: You must not remove, obscure, or alter the "Oraya Database" name or logo in any user interface, documentation, or metadata.
+- **Section 1.2**: If you modify the Software, you must clearly state "Based on Oraya Database" in a prominent location (e.g., the landing page or about section).
+- **Section 1.3**: You may not rename the Software for distribution. It must be distributed as Oraya Database or a clearly marked fork (e.g., "Oraya Database - [YourSuffix]").
 
-**Oraya Database — Data without boundaries, identity without compromise.**
+## Article 2: Prohibition of Monetization
+Oraya Database is a gift to the community and must remain free.
+- **Section 2.1**: You are strictly prohibited from selling the Software, licensing it for a fee, or charging users for access to any part of its core functionality.
+- **Section 2.2**: You may not bundle the Software as a paid component of a larger commercial product without explicit written consent from the original author (Hyd3dF).
+
+## Article 3: Mandatory Open Sharing (Copyleft)
+To ensure the rapid growth of Oraya, all improvements must be shared.
+- **Section 3.1**: If you make any modifications to the Software's code, you are legally obligated to release those changes as open-source under these same Oraya Rules.
+- **Section 3.2**: Private forks intended for internal production use are permitted, but any public-facing or redistributed version must be fully open.
+
+## Article 4: Ethical Compliance
+Oraya Database is a tool for builders, not destroyers.
+- **Section 4.1**: Do not use this software for unauthorized data extraction, illegal surveillance, or any activity that violates the privacy of individuals.
+
+---
+
+> [!WARNING]
+> **ENFORCEMENT NOTICE**
+> Violation of these Articles constitutes a breach of the Software's license. The original author (Hyd3dF) reserves the right to pursue legal action for trademark infringement and copyright violation against any individual or entity that violates the Branding or Non-Monetization clauses.
+
+**Oraya Database — Power to the People. Profit for None.**

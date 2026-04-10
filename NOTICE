@@ -1,21 +1,28 @@
-Oraya Database
-Copyright 2026 Hyd3dF
-
-This product includes software developed by Hyd3dF.
-
 *******************************************************************************
-* MANDATORY BRANDING NOTICE                                                   *
+*                               ORAYA DATABASE                                *
+*                           LEGAL & BRANDING NOTICE                           *
 *******************************************************************************
 
-As a condition of using this software, you MUST retain the original 
-"Oraya Database" (or "Oraya Data") branding in all instances where the 
-software is used, modified, or redistributed.
+Identity: Oraya Database
+Original Author: Hyd3dF
+Project Home: https://github.com/Hyd3dF/oroya.1
 
-1. You may NOT remove or obscure the "Oraya Database" name from any user 
-   interface, dashboard, or documentation.
-2. In all derivative works, you must include a clear attribution stating: 
-   "Powered by Oraya Database" or "Based on Oraya Database".
-3. The project name "Oraya Database" is a protected identity of the Oraya 
-   ecosystem and may not be rebranded to imply a different origin.
+BY USING THIS SOFTWARE, YOU ACKNOWLEDGE AND AGREE TO THE FOLLOWING:
 
-For more details on branding and attribution, see RULES.md.
+1. NO MONETIZATION:
+   This tool is free and must remain free. You are strictly prohibited from 
+   selling Oraya Database or charging for its use.
+
+2. BRANDING PRESERVATION:
+   The name "Oraya Database" is a protected identity. You may not rename this 
+   tool, remove its branding from the interface, or claim authorship of the 
+   original technology.
+
+3. FORKS AND DERIVATIVES:
+   Any derivative of this software must clearly state "Based on Oraya Database"
+   and must be shared under these same non-commercial open-source terms.
+
+*******************************************************************************
+FAILURE TO COMPLY WITH THESE RULES IS A VIOLATION OF THE LICENSE AND MAY 
+RESULT IN LEGAL ACTION FOR TRADEMARK AND COPYRIGHT INFRINGEMENT.
+*******************************************************************************

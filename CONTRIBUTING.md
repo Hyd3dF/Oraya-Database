@@ -1,26 +1,31 @@
 # Contributing to Oraya Database
 
-First off, thanks for taking the time to contribute! Oraya Database is an open-source project, and we love your input.
+First, thank you for showing interest in **Oraya Database**! Our mission is to build the most elegant and transparent database management system in the world. To maintain the quality and integrity of this project, we ask that all contributors follow these guidelines.
 
-## How Can I Contribute?
+## The Oraya Philosophy
+- **Speed**: Every feature must be optimized for performance.
+- **Aesthetics**: Follow the "Glassmorphism" and premium dark-mode design tokens.
+- **Openness**: All contributions must be shared freely under the Oraya Public License.
 
-### Reporting Bugs
-- Stop! Before you open a new issue, search the [Issues](https://github.com/Hyd3dF/oroya.1/issues) list.
-- If you find a bug, open an issue and include as many details as possible, such as your environment, project version, and steps to reproduce.
+## How to Contribute
 
-### Suggesting Enhancements
-- Enhancement suggestions are tracked as [GitHub issues](https://github.com/Hyd3dF/oroya.1/issues).
-- Describe the feature you want and why it's useful.
+### 1. Bug Reports & Feature Requests
+Use the [GitHub Issues](https://github.com/Hyd3dF/oroya.1/issues) tab. Please provide detailed steps for bugs and a clear "Why" for new features.
 
-### Pull Requests
-- Fork the repo and create your branch from `main`.
-- If you've added code that should be tested, add tests.
-- Ensure the test suite passes.
-- Make sure your code lints.
-- Maintain the premium design aesthetic (Shadcn UI, glassmorphism, Inter font).
+### 2. Code Contributions
+- **Branding**: Ensure your changes do not remove or obscure the "Oraya Database" branding.
+- **Type Safety**: Use TypeScript for everything. No `any` types allowed.
+- **Design**: If you're contributing to the UI, ensure you use the Shadcn UI components and keep the premium look.
 
-## Attribution Rules
-Reminder: All contributions must adhere to the **Oraya Database Rules of Engagement** in `RULES.md`.
+### 3. Documentation
+Help us keep our dökümantasyon clean and professional. All README and legal changes must be approved by the core maintainer (Hyd3dF).
 
-## License
-By contributing, you agree that your contributions will be licensed under its Apache License, Version 2.0.
+## The Social Contract
+By contributing, you agree that your work will be governed by the [RULES.md](./RULES.md) and the [LICENSE](./LICENSE). Specifically:
+- Your work cannot be monetized by third parties.
+- The **Oraya Database** identity must be preserved in all instances.
+
+## Code of Conduct
+Be respectful, be professional, and be excellent to each other.
+
+**Oraya Database — Built by humans, for humans.**
