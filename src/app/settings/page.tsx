@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ShieldCheck, Sparkles, Wifi } from "lucide-react";
 
 import { ConnectionForm } from "@/components/connection-form";
@@ -35,11 +36,22 @@ export default async function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <PageHeader
-        eyebrow="Connection Management"
-        title="Manage your PostgreSQL connection in real-time"
-        description="The placeholder layer has been removed. This screen now establishes a real connection via secure cookies, verifies the status, and syncs with the sidebar."
-      />
+      <div className="flex items-center gap-5">
+        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
+          <Image
+            src="/oroya.png"
+            alt="Oroya Logo"
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
+        <PageHeader
+          eyebrow="Connection Management"
+          title="Manage your PostgreSQL connection in real-time"
+          description="The placeholder layer has been removed. This screen now establishes a real connection via secure cookies, verifies the status, and syncs with the sidebar."
+        />
+      </div>
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="surface-panel border-white/80">

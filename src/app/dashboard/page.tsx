@@ -9,6 +9,7 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { Database, PencilLine, RefreshCcw, Table2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -356,8 +357,13 @@ export default function DashboardPage() {
               <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div className="space-y-2">
                   <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] bg-primary/10 text-primary">
-                      <Database className="h-5 w-5" />
+                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
+                      <Image
+                        src="/oroya.png"
+                        alt="Oroya Logo"
+                        fill
+                        className="object-contain"
+                      />
                     </div>
                     <div>
                       <CardTitle className="text-[28px] font-semibold tracking-[-0.02em]">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { DatabaseZap, KeyRound, Menu, Settings2 } from "lucide-react";
 
@@ -72,8 +73,14 @@ function SidebarContent({ initialStatus }: { initialStatus: ConnectionStatus }) 
     <div className="flex h-full flex-col">
       <div className="px-3 pb-6 pt-5">
         <div className="glass-panel flex items-start gap-4 px-4 py-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <DatabaseZap className="h-5 w-5" />
+          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
+            <Image
+              src="/oroya.png"
+              alt="Oroya Logo"
+              fill
+              className="object-contain"
+              priority
+            />
           </div>
           <div className="space-y-1">
             <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">
@@ -160,13 +167,23 @@ export function Sidebar({ initialStatus }: { initialStatus: ConnectionStatus }) 
     <>
       <div className="fixed inset-x-0 top-0 z-40 border-b border-white/70 bg-white/62 px-4 py-3 backdrop-blur-xl lg:hidden">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-              Oraya Database
-            </p>
-            <p className="text-sm font-semibold text-foreground">
-              PostgreSQL control center
-            </p>
+          <div className="flex items-center gap-3">
+            <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
+              <Image
+                src="/oroya.png"
+                alt="Oroya Logo"
+                fill
+                className="object-contain"
+              />
+            </div>
+            <div>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+                Oraya Database
+              </p>
+              <p className="text-sm font-semibold text-foreground">
+                PostgreSQL control center
+              </p>
+            </div>
           </div>
 
           <Sheet>

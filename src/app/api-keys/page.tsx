@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { KeyRound, LoaderCircle, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -130,8 +131,13 @@ export default function ApiKeysPage() {
       ) : apiKeys.length === 0 ? (
         <Card className="glass-panel border-white/80">
           <CardContent className="flex min-h-[280px] flex-col items-center justify-center gap-4 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-3xl bg-primary/10 text-primary">
-              <KeyRound className="h-6 w-6" />
+            <div className="relative flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
+              <Image
+                src="/oroya.png"
+                alt="Oroya Logo"
+                fill
+                className="object-cover"
+              />
             </div>
             <div>
               <h2 className="text-2xl font-semibold text-foreground">
