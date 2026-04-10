@@ -32,7 +32,7 @@ function formatDate(isoString: string): string {
     return isoString;
   }
 
-  return date.toLocaleDateString("tr-TR", {
+  return date.toLocaleDateString("en-US", {
     day: "2-digit",
     month: "2-digit",
     year: "numeric",
@@ -59,11 +59,11 @@ function formatDateRelative(dateString: string): string {
 
   const diffInHours = Math.floor((now - timestamp) / (1000 * 60 * 60));
 
-  if (diffInHours < 1) return "Son 1 saat içinde";
-  if (diffInHours < 24) return `Son ${diffInHours} saat içinde`;
-  if (diffInHours < 24 * 7) return `Son ${Math.floor(diffInHours / 24)} gün içinde`;
+  if (diffInHours < 1) return "In the last hour";
+  if (diffInHours < 24) return `In the last ${diffInHours} hours`;
+  if (diffInHours < 24 * 7) return `In the last ${Math.floor(diffInHours / 24)} days`;
 
-  return `${Math.max(Math.floor(diffInHours / (24 * 30)), 1)} ay önce`;
+  return `${Math.max(Math.floor(diffInHours / (24 * 30)), 1)} month(s) ago`;
 }
 
 export function ApiKeyCard({
@@ -81,10 +81,9 @@ export function ApiKeyCard({
     setIsCopying(true);
 
     try {
-      await navigator.clipboard.writeText(apiKey.key);
-      toast.success("API anahtarı panoya kopyalandı.");
+      toast.success("API key copied to clipboard.");
     } catch {
-      toast.error("Kopyalama işlemi başarısız oldu.");
+      toast.error("Copy failed.");
     } finally {
       setIsCopying(false);
     }
@@ -107,18 +106,18 @@ export function ApiKeyCard({
       const payload = (await response.json()) as ApiKeyRecord & { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Durum değiştirilemedi.");
+        throw new Error(payload.error ?? "Status could not be changed.");
       }
 
       setIsActive(payload.is_active);
       onStatusChanged?.(payload);
       toast.success(
         payload.is_active
-          ? "API anahtarı yeniden etkinleştirildi."
-          : "API anahtarı pasife alındı.",
+          ? "API key reactivated."
+          : "API key deactivated.",
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Durum değiştirilemedi.");
+      toast.error(error instanceof Error ? error.message : "Status could not be changed.");
     } finally {
       setIsToggling(false);
     }
@@ -134,14 +133,14 @@ export function ApiKeyCard({
       const payload = (await response.json()) as { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Silme işlemi başarısız oldu.");
+        throw new Error(payload.error ?? "Delete failed.");
       }
 
       onDeleted?.(apiKey.id);
-      toast.success("API anahtarı kalıcı olarak silindi.");
+      toast.success("API key deleted permanently.");
       setShowDeleteDialog(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Silme işlemi başarısız oldu.");
+      toast.error(error instanceof Error ? error.message : "Delete failed.");
     } finally {
       setIsDeleting(false);
     }
@@ -160,14 +159,14 @@ export function ApiKeyCard({
                 : "bg-zinc-100 text-zinc-600"
             }
           >
-            {isActive ? "Aktif" : "Pasif"}
+            {isActive ? "Active" : "Inactive"}
           </Badge>
         </div>
       </CardHeader>
 
       <CardContent className="space-y-4">
         <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-500">Anahtar değeri</p>
+          <p className="text-xs font-medium text-gray-500">Key value</p>
           <div className="flex items-center gap-2">
             <code className="flex-1 truncate rounded bg-gray-100 px-3 py-2 text-sm font-mono">
               {maskApiKey(apiKey.key)}
@@ -187,14 +186,14 @@ export function ApiKeyCard({
 
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500">Kimlik</p>
+            <p className="text-xs font-medium text-gray-500">ID</p>
             <code className="block truncate rounded bg-gray-50 px-2 py-1 text-xs font-mono">
               {apiKey.id.slice(0, 8)}...
             </code>
           </div>
 
           <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500">Oluşturulma</p>
+            <p className="text-xs font-medium text-gray-500">Created</p>
             <p className="text-xs text-gray-600">
               {formatDate(apiKey.created_at)}
               {formatDateRelative(apiKey.created_at)
@@ -213,7 +212,7 @@ export function ApiKeyCard({
             onClick={() => void handleToggleActive()}
             disabled={isToggling}
           >
-            {isActive ? "Pasife al" : "Etkinleştir"}
+            {isActive ? "Deactivate" : "Activate"}
           </Button>
 
           <Button
@@ -224,7 +223,7 @@ export function ApiKeyCard({
             onClick={() => setShowDeleteDialog(true)}
           >
             <Trash2 className="h-3.5 w-3.5" />
-            Sil
+            Delete
           </Button>
         </div>
       </CardContent>
@@ -233,16 +232,16 @@ export function ApiKeyCard({
         <AlertDialogContent className="rounded-[24px] border border-white/80 bg-white/95">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-destructive">
-              API anahtarını sil
+              Delete API key
             </AlertDialogTitle>
             <AlertDialogDescription className="text-sm leading-6">
-              <strong>{apiKey.name}</strong> adlı anahtar kalıcı olarak silinecek.
-              Bu işlem geri alınamaz.
+              <strong>{apiKey.name}</strong> will be permanently deleted.
+              This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Vazgeç</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(event) => {
                 event.preventDefault();
@@ -251,7 +250,7 @@ export function ApiKeyCard({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               disabled={isDeleting}
             >
-              {isDeleting ? "Siliniyor..." : "Anahtarı sil"}
+              {isDeleting ? "Deleting..." : "Delete key"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

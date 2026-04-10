@@ -8,21 +8,21 @@ import { getConnectionConfigFromCookies, getConnectionStatus } from "@/lib/db";
 
 const highlights = [
   {
-    title: "Şifreli çerez katmanı",
+    title: "Encrypted cookie layer",
     description:
-      "Bağlantı bilgileri sunucu tarafında AES-GCM ile şifrelenerek saklanır.",
+      "Connection details are stored server-side using AES-GCM encryption.",
     icon: ShieldCheck,
   },
   {
-    title: "Canlı durum takibi",
+    title: "Live status tracking",
     description:
-      "Sidebar ve ayarlar ekranı aynı bağlantı durumunu eşzamanlı izler.",
+      "The sidebar and settings screen track the same connection status in real-time.",
     icon: Wifi,
   },
   {
-    title: "Hızlı yeniden bağlanma",
+    title: "Fast reconnection",
     description:
-      "Aynı hedefe dönerken şifre alanını boş bırakırsanız mevcut güvenli parola korunur.",
+      "If you leave the password field blank when returning to the same target, the existing secure password is kept.",
     icon: Sparkles,
   },
 ];
@@ -36,19 +36,19 @@ export default async function SettingsPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="Bağlantı Yönetimi"
-        title="PostgreSQL bağlantısını gerçek zamanlı yönetin"
-        description="Placeholder katmanı kaldırıldı. Bu ekran artık güvenli çerez üstünden gerçek bağlantı kurar, durumu doğrular ve sidebar ile senkron çalışır."
+        eyebrow="Connection Management"
+        title="Manage your PostgreSQL connection in real-time"
+        description="The placeholder layer has been removed. This screen now establishes a real connection via secure cookies, verifies the status, and syncs with the sidebar."
       />
 
       <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
         <Card className="surface-panel border-white/80">
           <CardHeader className="space-y-3">
             <Badge className="w-fit rounded-full bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
-              Aktif form
+              Active form
             </Badge>
             <CardTitle className="text-2xl font-semibold tracking-tight">
-              Veritabanı bağlantısı
+              Database connection
             </CardTitle>
           </CardHeader>
           <CardContent>

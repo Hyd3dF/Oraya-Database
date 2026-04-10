@@ -84,7 +84,7 @@ export function normalizeIdentifier(value: string) {
 
 export function assertSafeIdentifier(identifier: string) {
   if (!IDENTIFIER_PATTERN.test(identifier)) {
-    throw new Error(`Geçersiz tanımlayıcı: ${identifier}`);
+    throw new Error(`Invalid identifier: ${identifier}`);
   }
 
   return identifier;

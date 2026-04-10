@@ -15,7 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ApiKeysPage() {
   const [apiKeys, setApiKeys] = useState<ApiKeyRecord[]>([]);
-  const [newKeyName, setNewKeyName] = useState("Yeni Anahtar");
+  const [newKeyName, setNewKeyName] = useState("New API Key");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -29,13 +29,13 @@ export default function ApiKeysPage() {
       const payload = (await response.json()) as ApiKeyRecord[] & { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "API anahtarları alınamadı.");
+        throw new Error(payload.error ?? "Failed to fetch API keys.");
       }
 
       setApiKeys(payload);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "API anahtarları alınamadı.",
+        error instanceof Error ? error.message : "Failed to fetch API keys.",
       );
     } finally {
       setIsLoading(false);
@@ -50,7 +50,7 @@ export default function ApiKeysPage() {
     const name = newKeyName.trim();
 
     if (!name) {
-      toast.error("Yeni anahtar için bir ad girin.");
+      toast.error("Please enter a name for the new key.");
       return;
     }
 
@@ -67,15 +67,15 @@ export default function ApiKeysPage() {
       const payload = (await response.json()) as ApiKeyRecord & { error?: string };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "API anahtarı oluşturulamadı.");
+        throw new Error(payload.error ?? "Failed to create API key.");
       }
 
       setApiKeys((current) => [payload, ...current]);
-      setNewKeyName("Yeni Anahtar");
-      toast.success("Yeni API anahtarı üretildi.");
+      setNewKeyName("New API Key");
+      toast.success("New API key generated successfully.");
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "API anahtarı oluşturulamadı.",
+        error instanceof Error ? error.message : "Failed to create API key.",
       );
     } finally {
       setIsCreating(false);
@@ -87,19 +87,19 @@ export default function ApiKeysPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        eyebrow="API Anahtarları"
-        title="Yerel anahtar kasasını yönetin"
-        description="Anahtarlar PostgreSQL bağlantısından bağımsız olarak yerel SQLite deposunda tutulur. Buradan yeni erişim anahtarları üretebilir, kopyalayabilir, pasife alabilir ve silebilirsiniz."
+        eyebrow="API Keys"
+        title="Manage your local key vault"
+        description="Keys are stored in a local SQLite database, independent of your PostgreSQL connection. Generate, copy, toggle, or revoke access keys here."
       />
 
       <Card className="surface-panel border-white/80">
         <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="space-y-2">
             <Badge className="w-fit rounded-full bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
-              {activeKeyCount} aktif anahtar
+              {activeKeyCount} active keys
             </Badge>
             <CardTitle className="text-2xl font-semibold tracking-tight">
-              Yeni API anahtarı üret
+              Generate new API key
             </CardTitle>
           </div>
 
@@ -107,7 +107,7 @@ export default function ApiKeysPage() {
             <Input
               value={newKeyName}
               onChange={(event) => setNewKeyName(event.target.value)}
-              placeholder="Anahtar adı"
+              placeholder="Key label"
               className="sm:min-w-[240px]"
             />
             <Button type="button" onClick={() => void handleCreateKey()} disabled={isCreating}>
@@ -116,7 +116,7 @@ export default function ApiKeysPage() {
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Anahtar oluştur
+              Create Key
             </Button>
           </div>
         </CardHeader>
@@ -135,10 +135,10 @@ export default function ApiKeysPage() {
             </div>
             <div>
               <h2 className="text-2xl font-semibold text-foreground">
-                Henüz anahtar üretilmedi
+                No keys generated yet
               </h2>
               <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                İlk anahtarınızı üretip uygulamanın erişim katmanını hazırlayın.
+                Generate your first access key to enable external API integration.
               </p>
             </div>
           </CardContent>

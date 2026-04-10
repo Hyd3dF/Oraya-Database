@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json(status);
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Bağlantı kurulamadı.",
+      error instanceof Error ? error.message : "Connection could not be established.",
       400,
     );
   }
@@ -53,7 +53,7 @@ export async function DELETE() {
   return NextResponse.json({
     connected: false,
     configured: false,
-    message: "Bağlantı sonlandırıldı.",
+    message: "Connection terminated.",
     checkedAt: new Date().toISOString(),
   });
 }

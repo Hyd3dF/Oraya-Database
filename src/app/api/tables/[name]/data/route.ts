@@ -18,7 +18,7 @@ export async function GET(
     return NextResponse.json(page);
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Tablo verileri alınamadı.",
+      error instanceof Error ? error.message : "Failed to fetch table data.",
       400,
     );
   }

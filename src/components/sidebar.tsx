@@ -21,20 +21,20 @@ import {
 const navigation = [
   {
     href: "/settings",
-    label: "Ayarlar",
-    description: "Bağlantı ve güvenlik",
+    label: "Settings",
+    description: "Database and security",
     icon: Settings2,
   },
   {
     href: "/dashboard",
-    label: "Panel",
-    description: "Tablolar ve şema",
+    label: "Dashboard",
+    description: "Tables and schema",
     icon: DatabaseZap,
   },
   {
     href: "/api-keys",
-    label: "API Anahtarları",
-    description: "Erişim yönetimi",
+    label: "API Keys",
+    description: "Access management",
     icon: KeyRound,
   },
 ];
@@ -43,7 +43,7 @@ function getStatusView(status: ConnectionStatus) {
   if (status.connected) {
     return {
       dotClassName: "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]",
-      title: "Bağlantı aktif",
+      title: "Connection active",
       description: `${status.host} / ${status.database}`,
     };
   }
@@ -51,15 +51,15 @@ function getStatusView(status: ConnectionStatus) {
   if (status.configured) {
     return {
       dotClassName: "bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.18)]",
-      title: "Doğrulama bekliyor",
+      title: "Waiting for verification",
       description: status.error ?? status.message,
     };
   }
 
   return {
     dotClassName: "bg-zinc-300 shadow-[0_0_0_4px_rgba(161,161,170,0.16)]",
-    title: "Bağlantı bekleniyor",
-    description: "Veritabanı ayarları henüz yapılandırılmadı",
+    title: "Waiting for connection",
+    description: "Database settings have not been configured yet",
   };
 }
 
@@ -136,7 +136,7 @@ function SidebarContent({ initialStatus }: { initialStatus: ConnectionStatus }) 
         <Separator className="mb-4 bg-white/80" />
         <div className="surface-panel px-4 py-4">
           <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-            Bağlantı Durumu
+            Connection Status
           </p>
           <div className="mt-3 flex items-center gap-3">
             <span className={`status-dot ${statusView.dotClassName}`} />
@@ -165,7 +165,7 @@ export function Sidebar({ initialStatus }: { initialStatus: ConnectionStatus }) 
               Oraya Database
             </p>
             <p className="text-sm font-semibold text-foreground">
-              PostgreSQL kontrol merkezi
+              PostgreSQL control center
             </p>
           </div>
 
@@ -177,7 +177,7 @@ export function Sidebar({ initialStatus }: { initialStatus: ConnectionStatus }) 
                 className="rounded-2xl border-white/80 bg-white/80 shadow-soft"
               >
                 <Menu className="h-4 w-4" />
-                <span className="sr-only">Navigasyonu aç</span>
+                <span className="sr-only">Open navigation</span>
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -185,7 +185,7 @@ export function Sidebar({ initialStatus }: { initialStatus: ConnectionStatus }) 
               className="w-[280px] border-white/80 bg-white/86 p-0 backdrop-blur-xl"
             >
               <SheetHeader className="sr-only">
-                <SheetTitle>Gezinme Menüsü</SheetTitle>
+                <SheetTitle>Navigation Menu</SheetTitle>
               </SheetHeader>
               <SidebarContent initialStatus={initialStatus} />
             </SheetContent>

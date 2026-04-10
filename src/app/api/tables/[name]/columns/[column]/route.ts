@@ -28,7 +28,7 @@ export async function DELETE(
     };
 
     if (next.columns.length === previous.columns.length) {
-      return errorResponse("Silinecek sütun bulunamadı.", 404);
+      return errorResponse("Column to be deleted not found.", 404);
     }
 
     const statements = generateAlterTableSQL(name, {
@@ -46,7 +46,7 @@ export async function DELETE(
     });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Kolon silinemedi.",
+      error instanceof Error ? error.message : "Failed to delete column.",
       400,
     );
   }

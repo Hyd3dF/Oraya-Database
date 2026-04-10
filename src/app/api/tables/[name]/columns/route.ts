@@ -24,7 +24,7 @@ export async function POST(
     const body = (await request.json()) as { column?: ColumnDefinition };
 
     if (!body.column) {
-      return errorResponse("Kolon tanımı gönderilmedi.", 400);
+      return errorResponse("Column definition not provided.", 400);
     }
 
     const schema = await getTableSchema(name);
@@ -35,7 +35,7 @@ export async function POST(
         (column) => normalizeIdentifier(column.name) === normalizeIdentifier(nextColumn.name),
       )
     ) {
-      return errorResponse("Aynı adda bir sütun zaten mevcut.", 400);
+      return errorResponse("A column with the same name already exists.", 400);
     }
 
     const sql = generateAddColumnSQL(name, nextColumn);
@@ -47,7 +47,7 @@ export async function POST(
     });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Kolon eklenemedi.",
+      error instanceof Error ? error.message : "Failed to add column.",
       400,
     );
   }
@@ -66,7 +66,7 @@ export async function PUT(
     const nextColumn = body.column ?? body.definition;
 
     if (!nextColumn) {
-      return errorResponse("Kolon tanımı gönderilmedi.", 400);
+      return errorResponse("Column definition not provided.", 400);
     }
 
     const previous = tableSchemaToDefinition(await getTableSchema(name));
@@ -76,7 +76,7 @@ export async function PUT(
     );
 
     if (!existingColumn) {
-      return errorResponse("Güncellenecek sütun bulunamadı.", 404);
+      return errorResponse("Column to be updated not found.", 404);
     }
 
     const next: TableDefinition = {
@@ -107,7 +107,7 @@ export async function PUT(
     });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Kolon güncellenemedi.",
+      error instanceof Error ? error.message : "Failed to update column.",
       400,
     );
   }

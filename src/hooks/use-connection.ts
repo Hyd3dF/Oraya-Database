@@ -13,7 +13,7 @@ async function fetchConnectionStatus() {
   });
 
   if (!response.ok) {
-    throw new Error("Bağlantı durumu alınamadı.");
+    throw new Error("Unable to fetch connection status.");
   }
 
   return (await response.json()) as ConnectionStatus;

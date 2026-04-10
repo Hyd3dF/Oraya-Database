@@ -28,23 +28,23 @@ function getStatusTone(status: ConnectionStatus) {
   if (status.connected) {
     return {
       dotClassName: "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]",
-      title: "Bağlantı aktif",
-      description: `${status.database} veritabanına bağlı.`,
+      title: "Connection active",
+      description: `Connected to ${status.database}.`,
     };
   }
 
   if (status.configured) {
     return {
       dotClassName: "bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.18)]",
-      title: "Bağlantı doğrulanamadı",
+      title: "Connection could not be verified",
       description: status.error ?? status.message,
     };
   }
 
   return {
     dotClassName: "bg-zinc-300 shadow-[0_0_0_4px_rgba(161,161,170,0.16)]",
-    title: "Bağlantı bekleniyor",
-    description: "Bağlantı bilgilerini girip veritabanına bağlanın.",
+    title: "Waiting for connection",
+    description: "Enter connection information and connect to the database.",
   };
 }
 
@@ -100,11 +100,11 @@ export function ConnectionForm({
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Bağlantı kurulamadı.");
+        throw new Error(payload.error ?? "Connection could not be established.");
       }
 
       dispatchConnectionStatusChanged();
-      toast.success("Veritabanı bağlantısı kuruldu.");
+      toast.success("Database connection established.");
       setForm((current) => ({
         ...current,
         password: "",
@@ -114,7 +114,7 @@ export function ConnectionForm({
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Bağlantı kurulurken hata oluştu.",
+        error instanceof Error ? error.message : "An error occurred while establishing the connection.",
       );
     } finally {
       setIsSubmitting(false);
@@ -131,17 +131,17 @@ export function ConnectionForm({
       const payload = await response.json();
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Bağlantı sonlandırılamadı.");
+        throw new Error(payload.error ?? "Connection could not be terminated.");
       }
 
       dispatchConnectionStatusChanged();
-      toast.success("Bağlantı sonlandırıldı.");
+      toast.success("Connection terminated.");
       startTransition(() => {
         router.refresh();
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Bağlantı sonlandırılırken hata oluştu.",
+        error instanceof Error ? error.message : "An error occurred while terminating the connection.",
       );
     } finally {
       setIsSubmitting(false);
@@ -176,14 +176,14 @@ export function ConnectionForm({
             ) : (
               <RotateCcw className="size-4" />
             )}
-            Durumu Yenile
+            Refresh Status
           </Button>
         </div>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor="db-host">Sunucu</Label>
+          <Label htmlFor="db-host">Host</Label>
           <Input
             id="db-host"
             value={form.host}
@@ -205,7 +205,7 @@ export function ConnectionForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="db-user">Kullanıcı</Label>
+          <Label htmlFor="db-user">User</Label>
           <Input
             id="db-user"
             value={form.user}
@@ -215,7 +215,7 @@ export function ConnectionForm({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="db-password">Şifre</Label>
+          <Label htmlFor="db-password">Password</Label>
           <Input
             id="db-password"
             type="password"
@@ -223,13 +223,13 @@ export function ConnectionForm({
             onChange={(event) => updateField("password", event.target.value)}
             autoComplete="current-password"
             placeholder={
-              hasStoredConnection ? "Boş bırakırsanız mevcut şifre korunur" : "Şifre"
+              hasStoredConnection ? "Leave blank to keep existing password" : "Password"
             }
           />
         </div>
 
         <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="db-database">Veritabanı</Label>
+          <Label htmlFor="db-database">Database</Label>
           <Input
             id="db-database"
             value={form.database}
@@ -246,11 +246,10 @@ export function ConnectionForm({
           </div>
           <div>
             <p className="text-sm font-semibold text-foreground">
-              Güvenli çerez saklama
+              Secure cookie storage
             </p>
             <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Bağlantı bilgileri istemci depolamasına yazılmaz. Sunucu tarafında
-              şifrelenmiş, `httpOnly` çerez içinde tutulur.
+              Connection information is not written to client storage. It is kept in an encrypted `httpOnly` cookie on the server side.
             </p>
           </div>
         </div>
@@ -263,7 +262,7 @@ export function ConnectionForm({
           ) : (
             <Plug2 className="size-4" />
           )}
-          Bağlan
+          Connect
         </Button>
 
         <Button
@@ -273,7 +272,7 @@ export function ConnectionForm({
           disabled={isSubmitting || !status.configured}
         >
           <Unplug className="size-4" />
-          Bağlantıyı Kes
+          Disconnect
         </Button>
 
         {status.connected ? (

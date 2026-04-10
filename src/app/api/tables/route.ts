@@ -18,7 +18,7 @@ export async function GET() {
     return NextResponse.json({ tables });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Tablo listesi alınamadı.",
+      error instanceof Error ? error.message : "Failed to fetch table list.",
       400,
     );
   }
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     const definition = body.definition;
 
     if (!definition) {
-      return errorResponse("İstek gövdesinde definition zorunludur.", 400);
+      return errorResponse("Definition is required in the request body.", 400);
     }
 
     const errors = validateTableDefinition(definition);
@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     const safeTableName = normalizeIdentifier(definition.tableName);
     const existingTables = await listTables();
     if (existingTables.some((t) => normalizeIdentifier(t.name) === safeTableName)) {
-      return errorResponse(`"${definition.tableName}" tablosu zaten mevcut.`, 400);
+      return errorResponse(`"${definition.tableName}" table already exists.`, 400);
     }
 
     const sql = generateCreateTableSQL(definition);
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Tablo oluşturulamadı.",
+      error instanceof Error ? error.message : "Failed to create table.",
       400,
     );
   }

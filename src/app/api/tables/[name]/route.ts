@@ -26,7 +26,7 @@ export async function GET(
     });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Tablo şeması alınamadı.",
+      error instanceof Error ? error.message : "Failed to fetch table schema.",
       400,
     );
   }
@@ -41,7 +41,7 @@ export async function PUT(
     const body = (await request.json()) as { definition?: TableDefinition };
 
     if (!body.definition) {
-      return errorResponse("İstek gövdesinde definition zorunludur.", 400);
+      return errorResponse("Definition is required in the request body.", 400);
     }
 
     const current = tableSchemaToDefinition(await getTableSchema(name));
@@ -61,7 +61,7 @@ export async function PUT(
     });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Tablo güncellenemedi.",
+      error instanceof Error ? error.message : "Failed to update table.",
       400,
     );
   }
@@ -76,7 +76,7 @@ export async function DELETE(
     const body = (await request.json()) as { confirmName?: string };
 
     if (normalizeIdentifier(body.confirmName ?? "") !== normalizeIdentifier(name)) {
-      return errorResponse("Tablo adı doğrulaması başarısız.", 400);
+      return errorResponse("Table name verification failed.", 400);
     }
 
     const sql = generateDropTableSQL(name);
@@ -89,7 +89,7 @@ export async function DELETE(
     });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "Tablo silinemedi.",
+      error instanceof Error ? error.message : "Failed to delete table.",
       400,
     );
   }

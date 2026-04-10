@@ -90,7 +90,7 @@ function decryptPayload(value: string): ConnectionInput | null {
 
 function requireString(value: unknown, label: string) {
   if (typeof value !== "string" || value.trim().length === 0) {
-    throw new Error(`${label} zorunludur.`);
+    throw new Error(`${label} is required.`);
   }
 
   return value.trim();
@@ -98,14 +98,14 @@ function requireString(value: unknown, label: string) {
 
 export function validateConnectionInput(input: unknown): ConnectionInput {
   if (!input || typeof input !== "object") {
-    throw new Error("Bağlantı bilgileri geçersiz.");
+    throw new Error("Connection details are invalid.");
   }
 
   const candidate = input as Record<string, unknown>;
-  const host = requireString(candidate.host, "Sunucu");
-  const user = requireString(candidate.user, "Kullanıcı");
+  const host = requireString(candidate.host, "Host");
+  const user = requireString(candidate.user, "User");
   const password = typeof candidate.password === "string" ? candidate.password : "";
-  const database = requireString(candidate.database, "Veritabanı");
+  const database = requireString(candidate.database, "Database");
   const rawPort = candidate.port;
   const port =
     typeof rawPort === "number"
@@ -115,7 +115,7 @@ export function validateConnectionInput(input: unknown): ConnectionInput {
         : Number.NaN;
 
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
-    throw new Error("Port 1 ile 65535 arasında olmalıdır.");
+    throw new Error("Port must be between 1 and 65535.");
   }
 
   return {
@@ -222,7 +222,7 @@ export async function getConnectionStatus(): Promise<ConnectionStatus> {
     return buildConnectionStatus({
       connected: false,
       configured: false,
-      message: "Bağlantı yapılandırılmadı.",
+      message: "Connection not configured.",
     });
   }
 
@@ -235,7 +235,7 @@ export async function getConnectionStatus(): Promise<ConnectionStatus> {
       host: config.host,
       database: config.database,
       user: config.user,
-      message: "Veritabanına bağlı.",
+      message: "Connected to database.",
     });
   } catch (error) {
     return buildConnectionStatus({
@@ -244,8 +244,8 @@ export async function getConnectionStatus(): Promise<ConnectionStatus> {
       host: config.host,
       database: config.database,
       user: config.user,
-      message: "Bağlantı doğrulanamadı.",
-      error: error instanceof Error ? error.message : "Bilinmeyen bağlantı hatası.",
+      message: "Connection initialization failed.",
+      error: error instanceof Error ? error.message : "Unknown connection error.",
     });
   }
 }
@@ -257,7 +257,7 @@ export async function queryWithStoredConnection<T extends QueryResultRow>(
   const config = await getConnectionConfigFromCookies();
 
   if (!config) {
-    throw new Error("Önce veritabanı bağlantısı kurmalısınız.");
+    throw new Error("You must establish a database connection first.");
   }
 
   return withPoolClient(config, async (client) => client.query<T>(queryText, values));
@@ -267,7 +267,7 @@ export async function executeStatementsWithStoredConnection(statements: string[]
   const config = await getConnectionConfigFromCookies();
 
   if (!config) {
-    throw new Error("Önce veritabanı bağlantısı kurmalısınız.");
+    throw new Error("You must establish a database connection first.");
   }
 
   return withPoolClient(config, async (client) => {

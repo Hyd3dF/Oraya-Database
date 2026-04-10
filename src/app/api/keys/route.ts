@@ -17,7 +17,7 @@ export async function GET() {
     return NextResponse.json(getAllApiKeys());
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "API anahtarları alınamadı.",
+      error instanceof Error ? error.message : "Failed to fetch API keys.",
       500,
     );
   }
@@ -29,13 +29,13 @@ export async function POST(request: Request) {
     const name = body.name?.trim();
 
     if (!name) {
-      return errorResponse("Anahtar adı zorunludur.");
+      return errorResponse("Key name is required.");
     }
 
     return NextResponse.json(createApiKey(name), { status: 201 });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "API anahtarı oluşturulamadı.",
+      error instanceof Error ? error.message : "Failed to create API key.",
       500,
     );
   }
@@ -47,20 +47,20 @@ export async function DELETE(request: Request) {
     const id = searchParams.get("id");
 
     if (!id) {
-      return errorResponse("Silme işlemi için anahtar kimliği zorunludur.");
+      return errorResponse("Key ID is required for deletion.");
     }
 
     if (!deleteApiKey(id)) {
-      return errorResponse("API anahtarı bulunamadı.", 404);
+      return errorResponse("API key not found.", 404);
     }
 
     return NextResponse.json({
       ok: true,
-      message: "API anahtarı silindi.",
+      message: "API key deleted.",
     });
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "API anahtarı silinemedi.",
+      error instanceof Error ? error.message : "Failed to delete API key.",
       500,
     );
   }
@@ -71,27 +71,27 @@ export async function PATCH(request: Request) {
     const body = (await request.json()) as { id?: string; is_active?: boolean };
 
     if (!body.id) {
-      return errorResponse("Güncellenecek anahtar kimliği zorunludur.");
+      return errorResponse("Key ID for update is required.");
     }
 
     if (typeof body.is_active !== "boolean") {
-      return errorResponse("is_active alanı boolean olmalıdır.");
+      return errorResponse("is_active field must be a boolean.");
     }
 
     if (!updateApiKeyActiveStatus(body.id, body.is_active)) {
-      return errorResponse("API anahtarı bulunamadı.", 404);
+      return errorResponse("API key not found.", 404);
     }
 
     const updated = getApiKeyById(body.id);
 
     if (!updated) {
-      return errorResponse("Güncellenen API anahtarı okunamadı.", 500);
+      return errorResponse("Failed to read updated API key.", 500);
     }
 
     return NextResponse.json(updated);
   } catch (error) {
     return errorResponse(
-      error instanceof Error ? error.message : "API anahtarı güncellenemedi.",
+      error instanceof Error ? error.message : "Failed to update API key.",
       500,
     );
   }
