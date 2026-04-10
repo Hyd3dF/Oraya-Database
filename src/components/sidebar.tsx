@@ -80,10 +80,10 @@ function SidebarContent({ initialStatus }: { initialStatus: ConnectionStatus }) 
               PostgreSQL
             </p>
             <h1 className="text-lg font-semibold text-foreground">
-              Yönetim Paneli
+              Oraya Database
             </h1>
             <p className="text-sm text-muted-foreground">
-              Minimal, hızlı ve güvenli kontrol merkezi
+              Premium, fast and secure control center
             </p>
           </div>
         </div>
@@ -162,7 +162,7 @@ export function Sidebar({ initialStatus }: { initialStatus: ConnectionStatus }) 
         <div className="flex items-center justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
-              Yönetim Paneli
+              Oraya Database
             </p>
             <p className="text-sm font-semibold text-foreground">
               PostgreSQL kontrol merkezi

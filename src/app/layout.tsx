@@ -8,8 +8,8 @@ import { Toaster } from "@/components/ui/sonner";
 import { getConnectionStatus } from "@/lib/db";
 
 export const metadata: Metadata = {
-  title: "Veritabanı Paneli",
-  description: "Apple esintili PostgreSQL yönetim paneli",
+  title: "Oraya Database",
+  description: "Premium PostgreSQL Management Engine & Data Governance",
 };
 
 export default async function RootLayout({
