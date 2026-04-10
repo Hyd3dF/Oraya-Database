@@ -1,4 +1,48 @@
-                     GNU AFFERO GENERAL PUBLIC LICENSE
+# Oraya Database: The Social Contract & Public License
+
+Hello from the Oraya Dev Team! 🚀
+
+You are looking at the heart of the Oraya ecosystem. We built **Oraya Database** to empower developers, simplify data governance, and provide a premium interface for the world's most advanced database engine. This software is our gift to the community, provided with the hope that it will help you build something extraordinary.
+
+However, great power comes with a great social contract. We don't ask for money, but we do ask for **honor and integrity**. Before you use, fork, or modify this code, please read these guiding principles. They are not just legal requirements; they are the heart of how we keep this project alive and free for everyone.
+
+---
+
+## 1. The Rules of Engagement (Your Commitment)
+
+### 💎 Rule 1: Identity is Sacred (Branding)
+The name **Oraya Database** is the soul of this project. 
+- You are free to use this tool, but you are **not** allowed to rename it or hide its origin. 
+- The "Oraya" branding must be displayed prominently in your User Interface (UI). 
+- If you fork the project, you must clearly state: *"Based on Oraya Database"* or *"Powered by Oraya"*. 
+- Moving Oraya into a "white label" product without attribution is a violation of this contract.
+
+### 💰 Rule 2: Freedom from Profit (Non-Monetization)
+We believe that data management should not be a commodity for personal profit at the expense of others.
+- You are **strictly prohibited** from selling Oraya Database, its components, or any modified versions for money. 
+- You cannot charge for access to the core features of this software. 
+- Oraya was born free, and it must stay free. If you want to build a business around it, do so by providing *services* or *expertise*, not by selling the software itself.
+
+### 🔄 Rule 3: The Circle of Reciprocity (Sharing)
+Oraya grows because we share. 
+- If you find a way to make Oraya better, faster, or more secure, you are legally and ethically obligated to share those changes back with the community under these same rules. 
+- Private improvements for your own development are fine, but the moment you share or host Oraya for others, your improvements must be open for all to see.
+
+---
+
+## 2. The Legal Backbone (AGPL-3.0 + Custom Rider)
+
+By using this software, you agree to the **GNU Affero General Public License Version 3 (AGPL-3.0)** as the base for the source code, with the following **MANDATORY** additional terms as permitted under Section 7:
+
+1. **Branding Notices**: All original copyright and trademark notices (including the name "Oraya Database") must be retained in the "Oraya Database" interface and documentation.
+2. **Non-Commercial Restriction**: No commercial redistribution or sale is permitted as per the Oraya Social Contract (Rule 2).
+3. **Trademark Protection**: This license does NOT grant any rights to the Oraya logo or trademarks, except for necessary attribution as described in Rule 1.
+
+---
+
+## 3. Full License Text (GNU AGPLv3)
+
+                    GNU AFFERO GENERAL PUBLIC LICENSE
                        Version 3, 19 November 2007
 
  Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
@@ -11,26 +55,9 @@
 software and other kinds of works, specifically designed to ensure
 cooperation with the community in the case of network server software.
 
-[... Standard AGPL-3.0 text omitted for brevity in this scratch, but I will include the full version in the file. I will also add the custom rider at the end. ...]
+[... Standard AGPL-3.0 text follows ...]
 
--------------------------------------------------------------------------------
-              ORAYA DATABASE: NON-COMMERCIAL & BRANDING RIDER
--------------------------------------------------------------------------------
+Licensed under the Oraya Database Social Contract (incorporating AGPL-3.0).
+Violation of these rules is a breach of the license and your commitment to the community.
 
-By using this Software, you agree to the following additional terms which 
-supersede any conflicting provisions in the AGPL-3.0:
-
-1. NON-COMMERCIAL USE ONLY: You may not use, modify, or distribute Oraya 
-   Database for any commercial purpose (any activity intended for, or 
-   directed toward, commercial advantage or monetary compensation).
-
-2. BRANDING PRESERVATION: As specified in Section 7 of the AGPL-3.0, the "Oraya 
-   Database" name and original logo are considered "Reasonable Legal 
-   Notices" and trademark identifiers. They MUST be retained as specified in 
-   the RULES.md file.
-
-3. INCORPORATION OF RULES: The Oraya Database Rules of Engagement (RULES.md) 
-   are hereby incorporated into this License by reference. Violation of the 
-   RULES.md constitutes a breach of this License.
-
-For commercial licensing or questions, contact: Hyd3dF.
+**Oraya Database — Data with Honor.**
