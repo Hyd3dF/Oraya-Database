@@ -10,7 +10,7 @@ First, thank you for showing interest in **Oraya Database**! Our mission is to b
 ## How to Contribute
 
 ### 1. Bug Reports & Feature Requests
-Use the [GitHub Issues](https://github.com/Hyd3dF/oroya.1/issues) tab. Please provide detailed steps for bugs and a clear "Why" for new features.
+Use the [GitHub Issues](https://github.com/Hyd3dF/Oraya-Database/issues) tab. Please provide detailed steps for bugs and a clear "Why" for new features.
 
 ### 2. Code Contributions
 - **Branding**: Ensure your changes do not remove or obscure the "Oraya Database" branding.

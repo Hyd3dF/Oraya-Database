@@ -1,9 +1,9 @@
 # 🪐 Oraya Database
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/Hyd3dF/oroya.1/main.yml?style=for-the-badge&logo=github&color=black)](https://github.com/Hyd3dF/oroya.1)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/Hyd3dF/Oraya-Database/main.yml?style=for-the-badge&logo=github&color=black)](https://github.com/Hyd3dF/Oraya-Database)
 [![License](https://img.shields.io/badge/License-AGPL%203.0%20%2B%20NC-blue?style=for-the-badge&logo=open-source-initiative&color=0070f3)](./LICENSE)
 [![Branding](https://img.shields.io/badge/Branding-Protected-orange?style=for-the-badge&logo=shieldify&color=f5a623)](./NOTICE)
-[![Deploy with Vercel](https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/new/clone?repository-url=https://github.com/Hyd3dF/oroya.1)
+[![Deploy with Vercel](https://img.shields.io/badge/Deploy-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/new/clone?repository-url=https://github.com/Hyd3dF/Oraya-Database)
 
 **Oraya Database** is a premium, full-stack PostgreSQL management engine designed for developers who demand high-level data governance and a seamless interface. It bridges the gap between raw database power and modern web aesthetics.
 
@@ -55,8 +55,8 @@ Read the full [RULES.md](./RULES.md) to avoid legal infringement.
 
 ### 1. Installation
 ```bash
-git clone https://github.com/Hyd3dF/oroya.1.git
-cd oroya.1
+git clone https://github.com/Hyd3dF/Oraya-Database.git
+cd Oraya-Database
 npm install
 ```
 
