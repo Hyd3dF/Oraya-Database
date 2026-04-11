@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const config = validateConnectionInput(candidate);
 
     await pingConnection(config);
-    await saveConnectionConfigToCookies(config);
+    await saveConnectionConfigToCookies(config, request);
 
     const status = await getConnectionStatus();
     return NextResponse.json(status);

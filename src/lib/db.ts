@@ -2,7 +2,7 @@ import "server-only";
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { Pool, type PoolClient, type QueryResultRow } from "pg";
 
 import {
@@ -184,12 +184,27 @@ export async function getConnectionConfigFromCookies() {
   return decryptPayload(encrypted);
 }
 
-export async function saveConnectionConfigToCookies(config: ConnectionInput) {
+export async function saveConnectionConfigToCookies(
+  config: ConnectionInput,
+  request?: Pick<Request, "url">,
+) {
+  const headersList = await headers();
+  const forwardedProto = headersList.get("x-forwarded-proto");
+  const requestUrlProto = request?.url ? new URL(request.url).protocol.replace(":", "") : null;
+  const originProto = headersList.get("origin")?.split("://")[0]?.toLowerCase();
+  const refererProto = headersList.get("referer")?.split("://")[0]?.toLowerCase();
+  const requestProtocol =
+    forwardedProto?.split(",")[0]?.trim().toLowerCase() ??
+    requestUrlProto ??
+    originProto ??
+    refererProto ??
+    "http";
+  const shouldUseSecureCookies = requestProtocol === "https";
   const cookieStore = await cookies();
   cookieStore.set(CONNECTION_COOKIE_NAME, encryptPayload(config), {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure: shouldUseSecureCookies,
     path: "/",
     maxAge: CONNECTION_COOKIE_MAX_AGE,
   });
