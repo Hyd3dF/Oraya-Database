@@ -36,11 +36,12 @@
   }
 
   html {
+    @apply h-full overflow-hidden;
     scroll-behavior: smooth;
   }
 
   body {
-    @apply min-h-screen bg-background text-foreground antialiased;
+    @apply h-screen overflow-hidden bg-background text-foreground antialiased;
     background-image:
       radial-gradient(circle at top left, rgba(0, 122, 255, 0.12), transparent 28%),
       radial-gradient(circle at top right, rgba(255, 255, 255, 0.95), transparent 24%),
@@ -115,6 +116,10 @@
 
   .status-dot-offline {
     @apply bg-zinc-300 shadow-[0_0_0_4px_rgba(161,161,170,0.16)];
+  }
+
+  .app-scroll-pane {
+    overscroll-behavior: contain;
   }
 }
 

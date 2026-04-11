@@ -1,8 +1,5 @@
 "use client";
 
-import { Info } from "lucide-react";
-
-import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -12,12 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import type { PostgresDataType } from "@/lib/sql-generator";
 
 const dataTypeGroups: Array<{
@@ -82,61 +73,34 @@ export function ColumnTypeSelect({
   const description = findTypeDescription(value);
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2">
-        <p className="ios-caption">Data type</p>
-        {description ? (
-          <TooltipProvider delayDuration={100}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/80 bg-white/80 text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  <Info className="h-3.5 w-3.5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-[220px] rounded-2xl border-white/80 bg-white/95 text-foreground shadow-soft">
-                {description}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        ) : null}
-      </div>
-
-      <div className="flex items-center gap-3">
-        <div className="ios-field-shell flex-1">
-          <Select value={value} onValueChange={(next) => onValueChange(next as PostgresDataType)}>
-            <SelectTrigger className="h-14 rounded-[22px] border-0 bg-transparent px-4 text-[15px] font-medium shadow-none focus:ring-0">
-              <SelectValue placeholder="Choose a type" />
-            </SelectTrigger>
-            <SelectContent className="rounded-[26px] border-white/80 bg-white/95 backdrop-blur-xl">
-              {dataTypeGroups.map((group) => (
-                <SelectGroup key={group.label}>
-                  <SelectLabel>{group.label}</SelectLabel>
-                  {group.items.map((item) => (
-                    <SelectItem key={item.value} value={item.value}>
-                      <div className="flex min-w-[180px] items-center justify-between gap-4">
-                        <span>{item.value.toUpperCase()}</span>
-                        <span className="text-[11px] text-muted-foreground">
-                          {group.label}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <Badge
-          variant="secondary"
-          className="rounded-full border border-white/80 bg-white/78 px-3 py-1.5 text-[11px] tracking-[0.12em] text-foreground/75"
+    <div className="space-y-1">
+      <p className="sr-only">Data type</p>
+      <Select value={value} onValueChange={(next) => onValueChange(next as PostgresDataType)}>
+        <SelectTrigger
+          aria-label="Column data type"
+          title={description}
+          className="h-8 rounded-md border-slate-200 bg-white px-2 text-[11px] font-medium shadow-none focus:ring-1"
         >
-          {value.toUpperCase()}
-        </Badge>
-      </div>
+          <SelectValue placeholder="Choose a type" />
+        </SelectTrigger>
+        <SelectContent className="rounded-lg border-slate-200 bg-white/95 backdrop-blur-xl">
+          {dataTypeGroups.map((group) => (
+            <SelectGroup key={group.label}>
+              <SelectLabel className="px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+                {group.label}
+              </SelectLabel>
+              {group.items.map((item) => (
+                <SelectItem key={item.value} value={item.value} className="py-1 pl-2 pr-7 text-[11px]">
+                  <div className="flex min-w-[160px] items-center justify-between gap-3">
+                    <span>{item.value.toUpperCase()}</span>
+                    <span className="text-[10px] text-muted-foreground">{group.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectGroup>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

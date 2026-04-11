@@ -1,12 +1,13 @@
 "use client";
 
-import { Hash, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 
 import { ColumnTypeSelect } from "@/components/schema-builder/column-type-select";
-import { ConstraintSwitches } from "@/components/schema-builder/constraint-switches";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
 import type { ColumnDefinition, ValidationError } from "@/lib/sql-generator";
 
 interface ColumnRowProps {
@@ -37,18 +38,26 @@ function findFieldError(errors: ValidationError[], fieldSuffix: "name" | "defaul
   return errors.find((error) => error.field.endsWith(`.${fieldSuffix}`))?.message;
 }
 
-function FieldError({ message }: { message?: string }) {
+function InlineToggle({
+  id,
+  label,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  id: string;
+  label: string;
+  checked: boolean;
+  disabled?: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
   return (
-    <p
-      className="ios-inline-error"
-      style={{
-        maxHeight: message ? 32 : 0,
-        opacity: message ? 1 : 0,
-        marginTop: message ? 8 : 0,
-      }}
-    >
-      {message ?? ""}
-    </p>
+    <div className="flex h-8 items-center justify-center">
+      <Label htmlFor={id} className="sr-only">
+        {label}
+      </Label>
+      <Switch id={id} checked={checked} disabled={disabled} onCheckedChange={onCheckedChange} />
+    </div>
   );
 }
 
@@ -64,97 +73,37 @@ export function ColumnRow({
   const nameError = findFieldError(errors, "name");
   const defaultError = findFieldError(errors, "defaultValue");
   const lengthError = findFieldError(errors, "length");
+  const rowErrors = Array.from(new Set(errors.map((error) => error.message)));
 
   return (
-    <div className="rounded-[30px] border border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(252,252,253,0.78))] p-6 shadow-[0_24px_80px_-52px_rgba(15,23,42,0.34)] backdrop-blur-xl transition-all duration-200 ease-out">
-      <div className="mb-6 flex items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <div className="flex h-11 w-11 items-center justify-center rounded-[18px] bg-primary/10 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.6)]">
-            <Hash className="h-4 w-4" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-[15px] font-semibold tracking-[-0.01em] text-foreground">
-              Column details
-            </p>
-            <p className="ios-support-text">
-              Adjust the name, type, default value, and constraints in one place.
-            </p>
-          </div>
-        </div>
-
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="h-10 rounded-full px-4 text-destructive/90 hover:bg-destructive/10 hover:text-destructive"
-          onClick={onRemove}
-        >
-          <Trash2 className="h-4 w-4" />
-          Remove
-        </Button>
-      </div>
-
-      <div className="grid gap-5 xl:grid-cols-[1.1fr_0.95fr_0.85fr]">
-        <div>
-          <Label htmlFor={`column-name-${column.id}`} className="ios-caption">
+    <div className="border-b border-slate-200/80 px-3 py-2 last:border-b-0">
+      <div className="grid min-w-[980px] grid-cols-[minmax(150px,1.4fr)_128px_84px_minmax(180px,1.35fr)_72px_72px_72px_36px] items-start gap-2">
+        <div className="space-y-1">
+          <Label htmlFor={`column-name-${column.id}`} className="sr-only">
             Column name
           </Label>
-          <div className="mt-2 ios-field-shell" data-invalid={nameError ? "true" : "false"}>
-            <Input
-              id={`column-name-${column.id}`}
-              value={column.name}
-              onChange={(event) => onChange({ name: event.target.value })}
-              placeholder="e.g. user_email"
-              className="h-14 rounded-[22px] border-0 bg-transparent px-4 text-[15px] shadow-none backdrop-blur-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-          </div>
-          <FieldError message={nameError} />
+          <Input
+            id={`column-name-${column.id}`}
+            value={column.name}
+            onChange={(event) => onChange({ name: event.target.value })}
+            placeholder="column_name"
+            className={cn(
+              "h-8 rounded-md border-slate-200 bg-white px-2 text-[11px] shadow-none",
+              nameError && "border-destructive/50 focus-visible:ring-destructive/20",
+            )}
+          />
         </div>
 
-        <div>
-          <ColumnTypeSelect value={column.type} onValueChange={(value) => onChange({ type: value })} />
-        </div>
+        <ColumnTypeSelect
+          value={column.type}
+          onValueChange={(value) => onChange({ type: value })}
+        />
 
-        <div>
-          <Label htmlFor={`column-default-${column.id}`} className="ios-caption">
-            Default value
-          </Label>
-          <div className="mt-2 ios-field-shell" data-invalid={defaultError ? "true" : "false"}>
-            <Input
-              id={`column-default-${column.id}`}
-              value={column.defaultValue ?? ""}
-              onChange={(event) => onChange({ defaultValue: event.target.value })}
-              placeholder="e.g. now()"
-              className="h-14 rounded-[22px] border-0 bg-transparent px-4 text-[15px] shadow-none backdrop-blur-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-            />
-          </div>
-          <FieldError message={defaultError} />
-
-          {shortcuts.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {shortcuts.map((shortcut) => (
-                <Button
-                  key={shortcut}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 rounded-full border-white/80 bg-white/72 px-3 text-[12px] font-medium text-foreground/80 shadow-none hover:bg-white"
-                  onClick={() => onChange({ defaultValue: shortcut })}
-                >
-                  {shortcut}
-                </Button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-      </div>
-
-      {hasLength ? (
-        <div className="mt-5 max-w-[240px]">
-          <Label htmlFor={`column-length-${column.id}`} className="ios-caption">
+        <div className="space-y-1">
+          <Label htmlFor={`column-length-${column.id}`} className="sr-only">
             Length
           </Label>
-          <div className="mt-2 ios-field-shell" data-invalid={lengthError ? "true" : "false"}>
+          {hasLength ? (
             <Input
               id={`column-length-${column.id}`}
               inputMode="numeric"
@@ -165,20 +114,100 @@ export function ColumnRow({
                 })
               }
               placeholder="255"
-              className="h-14 rounded-[22px] border-0 bg-transparent px-4 text-[15px] shadow-none backdrop-blur-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+              className={cn(
+                "h-8 rounded-md border-slate-200 bg-white px-2 text-[11px] shadow-none",
+                lengthError && "border-destructive/50 focus-visible:ring-destructive/20",
+              )}
             />
-          </div>
-          <FieldError message={lengthError} />
+          ) : (
+            <div className="flex h-8 items-center rounded-md border border-slate-200 bg-slate-50 px-2 text-[11px] text-muted-foreground">
+              -
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor={`column-default-${column.id}`} className="sr-only">
+            Default value
+          </Label>
+          <Input
+            id={`column-default-${column.id}`}
+            value={column.defaultValue ?? ""}
+            onChange={(event) => onChange({ defaultValue: event.target.value })}
+            placeholder="default expression"
+            className={cn(
+              "h-8 rounded-md border-slate-200 bg-white px-2 text-[11px] shadow-none",
+              defaultError && "border-destructive/50 focus-visible:ring-destructive/20",
+            )}
+          />
+          {shortcuts.length > 0 ? (
+            <div className="flex flex-wrap gap-1">
+              {shortcuts.map((shortcut) => (
+                <button
+                  key={shortcut}
+                  type="button"
+                  className="rounded-sm border border-slate-200 bg-slate-50 px-1.5 py-0.5 text-[10px] text-muted-foreground transition-colors hover:border-slate-300 hover:bg-white hover:text-foreground"
+                  onClick={() => onChange({ defaultValue: shortcut })}
+                >
+                  {shortcut}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <InlineToggle
+          id={`column-pk-${column.id}`}
+          label={`Primary key ${column.id}`}
+          checked={column.isPrimaryKey}
+          onCheckedChange={(nextChecked) => {
+            onChange({
+              isPrimaryKey: nextChecked,
+              isNotNull: nextChecked ? true : column.isNotNull,
+            });
+          }}
+        />
+
+        <InlineToggle
+          id={`column-unique-${column.id}`}
+          label={`Unique ${column.id}`}
+          checked={column.isUnique}
+          onCheckedChange={(nextChecked) => onChange({ isUnique: nextChecked })}
+        />
+
+        <InlineToggle
+          id={`column-required-${column.id}`}
+          label={`Required ${column.id}`}
+          checked={column.isPrimaryKey ? true : column.isNotNull}
+          disabled={column.isPrimaryKey}
+          onCheckedChange={(nextChecked) => onChange({ isNotNull: nextChecked })}
+        />
+
+        <div className="flex h-8 items-center justify-center">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 rounded-md p-0 text-muted-foreground hover:bg-destructive/8 hover:text-destructive"
+            onClick={onRemove}
+            aria-label={`Remove ${column.name || "column"}`}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {rowErrors.length > 0 ? (
+        <div className="min-w-[980px] pt-1 text-[10px] text-destructive">
+          {rowErrors.join(" ")}
         </div>
       ) : null}
 
-      <div className="mt-6">
-        <ConstraintSwitches
-          column={column}
-          primaryKeyCount={primaryKeyCount}
-          onChange={onChange}
-        />
-      </div>
+      {column.isPrimaryKey && primaryKeyCount > 1 ? (
+        <div className="min-w-[980px] pt-1 text-[10px] text-amber-700">
+          Multiple primary-key columns are selected. This will save as a composite key.
+        </div>
+      ) : null}
     </div>
   );
 }

@@ -70,10 +70,10 @@ function SidebarContent({ initialStatus }: { initialStatus: ConnectionStatus }) 
   const statusView = getStatusView(status);
 
   return (
-    <div className="flex h-full flex-col">
-      <div className="px-3 pb-6 pt-5">
-        <div className="glass-panel flex items-start gap-4 px-4 py-4">
-          <div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
+      <div className="px-3 pb-4 pt-4">
+        <div className="glass-panel flex items-start gap-3 px-4 py-3.5">
+          <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
             <Image
               src="/oroya.png"
               alt="Oroya Logo"
@@ -83,21 +83,21 @@ function SidebarContent({ initialStatus }: { initialStatus: ConnectionStatus }) 
             />
           </div>
           <div className="space-y-1">
-            <p className="text-sm font-medium uppercase tracking-[0.24em] text-muted-foreground">
+            <p className="text-[11px] font-medium uppercase tracking-[0.24em] text-muted-foreground">
               PostgreSQL
             </p>
-            <h1 className="text-lg font-semibold text-foreground">
+            <h1 className="text-base font-semibold text-foreground">
               Oraya Database
             </h1>
-            <p className="text-sm text-muted-foreground">
-              Premium, fast and secure control center
+            <p className="text-[13px] leading-5 text-muted-foreground">
+              Precise desktop control center
             </p>
           </div>
         </div>
       </div>
 
-      <ScrollArea className="flex-1 px-3">
-        <nav className="space-y-2">
+      <ScrollArea className="min-h-0 flex-1 px-3">
+        <nav className="space-y-1.5 pb-2">
           {navigation.map((item) => {
             const Icon = item.icon;
             const active = pathname === item.href;
@@ -107,26 +107,26 @@ function SidebarContent({ initialStatus }: { initialStatus: ConnectionStatus }) 
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "nav-pill flex items-center gap-3 border-white/70 bg-white/52 hover:-translate-y-0.5 hover:border-white/90 hover:bg-white/80 hover:shadow-soft",
+                  "nav-pill flex items-center gap-3 border-white/70 bg-white/56 px-3.5 py-3 hover:-translate-y-0.5 hover:border-white/90 hover:bg-white/82 hover:shadow-soft",
                   active &&
                     "border-primary/15 bg-primary/[0.08] text-primary shadow-soft",
                 )}
               >
                 <span
                   className={cn(
-                    "flex h-11 w-11 items-center justify-center rounded-2xl bg-background/80 text-muted-foreground transition-all duration-200 ease-out",
+                    "flex h-10 w-10 items-center justify-center rounded-[15px] bg-background/80 text-muted-foreground transition-all duration-200 ease-out",
                     active && "bg-primary text-primary-foreground",
                   )}
                 >
                   <Icon className="h-[18px] w-[18px]" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold">
+                  <span className="block truncate text-[13px] font-semibold">
                     {item.label}
                   </span>
                   <span
                     className={cn(
-                      "block truncate text-xs text-muted-foreground",
+                      "block truncate text-[11px] text-muted-foreground",
                       active && "text-primary/80",
                     )}
                   >
@@ -139,19 +139,19 @@ function SidebarContent({ initialStatus }: { initialStatus: ConnectionStatus }) 
         </nav>
       </ScrollArea>
 
-      <div className="px-3 pb-4 pt-6">
-        <Separator className="mb-4 bg-white/80" />
-        <div className="surface-panel px-4 py-4">
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-muted-foreground">
+      <div className="px-3 pb-3 pt-4">
+        <Separator className="mb-3 bg-white/80" />
+        <div className="surface-panel px-4 py-3.5">
+          <p className="text-[11px] font-medium uppercase tracking-[0.22em] text-muted-foreground">
             Connection Status
           </p>
-          <div className="mt-3 flex items-center gap-3">
+          <div className="mt-2.5 flex items-center gap-3">
             <span className={`status-dot ${statusView.dotClassName}`} />
             <div className="min-w-0">
-              <p className="text-sm font-semibold text-foreground">
+              <p className="text-[13px] font-semibold text-foreground">
                 {statusView.title}
               </p>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className="truncate text-[11px] text-muted-foreground">
                 {statusView.description}
               </p>
             </div>
@@ -199,7 +199,7 @@ export function Sidebar({ initialStatus }: { initialStatus: ConnectionStatus }) 
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-[280px] border-white/80 bg-white/86 p-0 backdrop-blur-xl"
+              className="h-screen w-[280px] overflow-hidden border-white/80 bg-white/86 p-0 backdrop-blur-xl"
             >
               <SheetHeader className="sr-only">
                 <SheetTitle>Navigation Menu</SheetTitle>
@@ -210,7 +210,7 @@ export function Sidebar({ initialStatus }: { initialStatus: ConnectionStatus }) 
         </div>
       </div>
 
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[260px] border-r border-white/60 bg-white/36 backdrop-blur-2xl lg:block">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden h-screen w-[260px] overflow-hidden border-r border-white/60 bg-white/36 backdrop-blur-2xl lg:block">
         <SidebarContent initialStatus={initialStatus} />
       </aside>
     </>

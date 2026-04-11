@@ -10,15 +10,15 @@ export function PageHeader({
   eyebrow = "Control Center",
 }: PageHeaderProps) {
   return (
-    <div className="space-y-3">
-      <p className="text-xs font-medium uppercase tracking-[0.28em] text-primary/80">
+    <div className="space-y-2">
+      <p className="text-[11px] font-medium uppercase tracking-[0.28em] text-primary/80">
         {eyebrow}
       </p>
-      <div className="space-y-2">
-        <h1 className="text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-4xl">
+      <div className="space-y-1.5">
+        <h1 className="text-balance text-[28px] font-semibold tracking-[-0.03em] text-foreground sm:text-[32px]">
           {title}
         </h1>
-        <p className="max-w-2xl text-base leading-7 text-muted-foreground">
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
           {description}
         </p>
       </div>

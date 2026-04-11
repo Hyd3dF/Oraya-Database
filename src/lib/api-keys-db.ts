@@ -12,6 +12,14 @@ export interface ApiKeyRecord {
   created_at: string;
 }
 
+interface ApiKeyRow {
+  id: string;
+  key: string;
+  name: string;
+  is_active: number;
+  created_at: string;
+}
+
 const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "api-keys.db");
 
@@ -33,7 +41,9 @@ db.exec(`
 `);
 
 export function getAllApiKeys(): ApiKeyRecord[] {
-  const rows = db.prepare("SELECT * FROM api_keys ORDER BY created_at DESC").all() as any[];
+  const rows = db
+    .prepare("SELECT * FROM api_keys ORDER BY created_at DESC")
+    .all() as ApiKeyRow[];
   return rows.map((row) => ({
     ...row,
     is_active: Boolean(row.is_active),
@@ -70,7 +80,9 @@ export function updateApiKeyActiveStatus(id: string, is_active: boolean): boolea
 }
 
 export function getApiKeyById(id: string): ApiKeyRecord | undefined {
-  const row = db.prepare("SELECT * FROM api_keys WHERE id = ?").get(id) as any;
+  const row = db.prepare("SELECT * FROM api_keys WHERE id = ?").get(id) as
+    | ApiKeyRow
+    | undefined;
   if (!row) return undefined;
   
   return {

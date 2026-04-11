@@ -10,7 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Database, PencilLine, RefreshCcw, Table2 } from "lucide-react";
+import { PencilLine, RefreshCcw, Table2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { DataTable } from "@/components/data-table";
@@ -292,51 +292,71 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        eyebrow="Explorer & Schema Builder"
-        title="Manage live tables with a calmer, clearer workflow"
-        description="The left rail keeps the schema list airy and easy to scan. The detail panel brings structure, preview data, and editing actions into one consistent surface."
-      />
+    <div className="flex h-full min-h-0 flex-col gap-4">
+      <div className="rounded-[28px] border border-white/75 bg-white/72 p-4 shadow-soft backdrop-blur-xl">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div className="space-y-3">
+            <PageHeader
+              eyebrow="Explorer & Schema Builder"
+              title="Run the database like a native desktop workspace"
+              description="Tables stay docked on the left, schema context stays visible, and the active data grid behaves like a dense spreadsheet instead of a long web page."
+            />
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          variant="outline"
-          onClick={() => void handleRefreshDashboard()}
-          disabled={isLoadingTables || isLoadingDetails || isRefreshingConnection}
-          className="rounded-full border-white/80 bg-white/80 px-5"
-        >
-          <RefreshCcw
-            className={[
-              "h-4 w-4",
-              isLoadingTables || isLoadingDetails || isRefreshingConnection
-                ? "animate-spin"
-                : "",
-            ].join(" ")}
-          />
-          Refresh Data
-        </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge className="rounded-md bg-primary/10 px-2.5 py-1 text-[10px] text-primary hover:bg-primary/10">
+                {tables.length} tables
+              </Badge>
+              {selectedDefinition ? (
+                <Badge
+                  variant="secondary"
+                  className="rounded-md px-2.5 py-1 text-[10px]"
+                >
+                  {selectedDefinition.tableName}
+                </Badge>
+              ) : null}
+              {status.connected ? (
+                <Badge className="rounded-md bg-emerald-500/12 px-2.5 py-1 text-[10px] text-emerald-700 hover:bg-emerald-500/12">
+                  {status.host} / {status.database}
+                </Badge>
+              ) : null}
+            </div>
+          </div>
 
-        {status.connected ? (
-          <Badge className="rounded-full bg-emerald-500/12 px-4 py-2 text-emerald-700 hover:bg-emerald-500/12">
-            {status.host} / {status.database}
-          </Badge>
-        ) : null}
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleRefreshDashboard()}
+              disabled={isLoadingTables || isLoadingDetails || isRefreshingConnection}
+              className="h-9 rounded-xl border-white/80 bg-white/88 px-4 text-[12px]"
+            >
+              <RefreshCcw
+                className={[
+                  "h-4 w-4",
+                  isLoadingTables || isLoadingDetails || isRefreshingConnection
+                    ? "animate-spin"
+                    : "",
+                ].join(" ")}
+              />
+              Refresh Data
+            </Button>
+          </div>
+        </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[310px_minmax(0,1fr)]">
         {isLoadingTables ? (
-          <Card className="surface-panel border-white/80">
-            <CardContent className="space-y-3 p-6">
-              <Skeleton className="h-14 rounded-[24px] bg-white/75" />
-              <Skeleton className="h-24 rounded-[24px] bg-white/70" />
-              <Skeleton className="h-24 rounded-[24px] bg-white/65" />
-              <Skeleton className="h-24 rounded-[24px] bg-white/60" />
+          <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-[26px] border-white/80 bg-white/84">
+            <CardContent className="space-y-3 p-4">
+              <Skeleton className="h-10 rounded-[16px] bg-white/75" />
+              <Skeleton className="h-20 rounded-[18px] bg-white/70" />
+              <Skeleton className="h-20 rounded-[18px] bg-white/65" />
+              <Skeleton className="h-20 rounded-[18px] bg-white/60" />
             </CardContent>
           </Card>
         ) : (
           <TableList
+            className="min-h-0"
             tables={tables}
             selectedTableName={selectedTableName}
             onSelectTable={(tableName) => {
@@ -351,36 +371,39 @@ export default function DashboardPage() {
           />
         )}
 
-        <div className="space-y-6">
+        <div className="min-h-0">
           {selectedDefinition ? (
-            <Card className="glass-panel border-white/80">
-              <CardHeader className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-4">
-                    <div className="relative flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
-                      <Image
-                        src="/oroya.png"
-                        alt="Oroya Logo"
-                        fill
-                        className="object-contain"
-                      />
-                    </div>
-                    <div>
-                      <CardTitle className="text-[28px] font-semibold tracking-[-0.02em]">
-                        {selectedDefinition.tableName}
-                      </CardTitle>
-                      <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                        {selectedDefinition.columns.length} columns · {tableData?.totalCount ?? 0} rows
-                      </p>
+            <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border-white/80 bg-white/82">
+              <CardHeader className="shrink-0 gap-4 border-b border-slate-200/70 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18%] bg-white shadow-sm ring-1 ring-black/[0.04]">
+                    <Image
+                      src="/oroya.png"
+                      alt="Oroya Logo"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                  <div className="min-w-0 space-y-2">
+                    <CardTitle className="truncate text-[20px] font-semibold tracking-[-0.03em]">
+                      {selectedDefinition.tableName}
+                    </CardTitle>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge className="rounded-md bg-primary/10 px-2.5 py-1 text-[10px] text-primary hover:bg-primary/10">
+                        {selectedDefinition.columns.length} columns
+                      </Badge>
+                      <Badge variant="secondary" className="rounded-md px-2.5 py-1 text-[10px]">
+                        {tableData?.totalCount ?? 0} rows
+                      </Badge>
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={openEditDialog}
-                    className="rounded-full border-white/80 bg-white/80 px-5"
+                    className="h-9 rounded-xl border-white/80 bg-white/88 px-4 text-[12px]"
                   >
                     <PencilLine className="h-4 w-4" />
                     Edit Schema
@@ -388,7 +411,7 @@ export default function DashboardPage() {
                   <Button
                     type="button"
                     variant="destructive"
-                    className="rounded-full px-5"
+                    className="h-9 rounded-xl px-4 text-[12px]"
                     onClick={() => {
                       setDeleteTableName(selectedDefinition.tableName);
                       setDeleteConfirmation("");
@@ -398,10 +421,10 @@ export default function DashboardPage() {
                   </Button>
                 </div>
               </CardHeader>
-              <CardContent className="grid gap-6">
+              <CardContent className="flex min-h-0 flex-1 flex-col gap-4 p-4">
                 <DataTable
                   title="Column Schema"
-                  description="Field types, constraints, and defaults are presented as a clean structural summary."
+                  description="Field types, defaults, and constraints in a compact structural view."
                   columns={[
                     { key: "name", label: "Column" },
                     { key: "type", label: "Type" },
@@ -410,69 +433,75 @@ export default function DashboardPage() {
                   ]}
                   rows={schemaPreviewRows}
                   emptyState="No column details are available for this table yet."
+                  viewportClassName="max-h-[220px]"
                 />
 
-                <DataTable
-                  title="Row Preview"
-                  description={`Showing the first ${tableData?.limit ?? 25} rows in a more readable, lightly formatted view.`}
-                  columns={dataColumns}
-                  rows={tableData?.rows ?? []}
-                  emptyState="There are no rows to preview for the selected table."
-                />
-
-                {tableData ? (
-                  <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-white/80 bg-white/76 px-5 py-4">
-                    <p className="text-sm text-muted-foreground">
-                      Showing {tableData.offset + 1}-
-                      {Math.min(tableData.offset + tableData.rows.length, tableData.totalCount)} of{" "}
-                      {tableData.totalCount} rows
-                    </p>
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full border-white/80 bg-white/80 px-4"
-                        disabled={tableData.offset === 0 || isLoadingDetails}
-                        onClick={() =>
-                          setOffset((current) => Math.max(current - tableData.limit, 0))
-                        }
-                      >
-                        Previous
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="rounded-full border-white/80 bg-white/80 px-4"
-                        disabled={
-                          tableData.offset + tableData.limit >= tableData.totalCount ||
-                          isLoadingDetails
-                        }
-                        onClick={() => setOffset((current) => current + tableData.limit)}
-                      >
-                        Next
-                      </Button>
+                <div className="flex min-h-0 flex-1 flex-col gap-3">
+                  {tableData ? (
+                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-slate-200/80 bg-[#f8f9fb] px-4 py-3">
+                      <p className="text-[12px] text-muted-foreground">
+                        Showing {tableData.offset + 1}-
+                        {Math.min(tableData.offset + tableData.rows.length, tableData.totalCount)} of{" "}
+                        {tableData.totalCount} rows
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg border-white/80 bg-white/90 px-3 text-[11px]"
+                          disabled={tableData.offset === 0 || isLoadingDetails}
+                          onClick={() =>
+                            setOffset((current) => Math.max(current - tableData.limit, 0))
+                          }
+                        >
+                          Previous
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="rounded-lg border-white/80 bg-white/90 px-3 text-[11px]"
+                          disabled={
+                            tableData.offset + tableData.limit >= tableData.totalCount ||
+                            isLoadingDetails
+                          }
+                          onClick={() => setOffset((current) => current + tableData.limit)}
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                ) : null}
+                  ) : null}
+
+                  <DataTable
+                    title="Row Preview"
+                    description={`Spreadsheet-style preview of the first ${tableData?.limit ?? 25} live records.`}
+                    columns={dataColumns}
+                    rows={tableData?.rows ?? []}
+                    emptyState="There are no rows to preview for the selected table."
+                    className="min-h-0 flex-1"
+                    contentClassName="min-h-0 flex-1"
+                    viewportClassName="min-h-0 flex-1"
+                  />
+                </div>
               </CardContent>
             </Card>
           ) : (
-            <Card className="glass-panel border-white/80">
-              <CardContent className="flex min-h-[460px] flex-col items-center justify-center gap-4 text-center">
-                <div className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-primary/10 text-primary">
-                  <Table2 className="h-6 w-6" />
+            <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border-white/80 bg-white/78">
+              <CardContent className="flex h-full min-h-[360px] flex-col items-center justify-center gap-4 p-6 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-primary/10 text-primary">
+                  <Table2 className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-[30px] font-semibold tracking-[-0.02em] text-foreground">
+                  <h2 className="text-[26px] font-semibold tracking-[-0.03em] text-foreground">
                     No table selected
                   </h2>
-                  <p className="mt-2 max-w-xl text-sm leading-7 text-muted-foreground">
-                    Choose a table from the left rail or create a new one to begin shaping the schema.
+                  <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                    Choose a table from the left rail or create a new one to open its schema and data grid.
                   </p>
                 </div>
-                <Button type="button" onClick={openCreateDialog} className="rounded-full px-5">
+                <Button type="button" onClick={openCreateDialog} className="rounded-xl px-4 text-[12px]">
                   Create Your First Table
                 </Button>
               </CardContent>

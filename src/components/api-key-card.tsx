@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Clipboard, Trash2 } from "lucide-react";
+import { Copy, LoaderCircle, Power, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import type { ApiKeyRecord } from "@/lib/api-keys-db";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,9 +32,9 @@ function formatDate(isoString: string): string {
     return isoString;
   }
 
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleString("en-US", {
     day: "2-digit",
-    month: "2-digit",
+    month: "short",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
@@ -81,6 +81,7 @@ export function ApiKeyCard({
     setIsCopying(true);
 
     try {
+      await navigator.clipboard.writeText(apiKey.key);
       toast.success("API key copied to clipboard.");
     } catch {
       toast.error("Copy failed.");
@@ -147,79 +148,94 @@ export function ApiKeyCard({
   }
 
   return (
-    <Card className="border border-white/80 bg-white/70 shadow-sm">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between gap-3">
-          <CardTitle className="text-lg">{apiKey.name}</CardTitle>
-          <Badge
-            variant={isActive ? "default" : "secondary"}
-            className={
-              isActive
-                ? "bg-emerald-100 text-emerald-800"
-                : "bg-zinc-100 text-zinc-600"
-            }
-          >
-            {isActive ? "Active" : "Inactive"}
-          </Badge>
-        </div>
-      </CardHeader>
+    <Card className="rounded-[20px] border border-slate-200/80 bg-white/90 shadow-[0_18px_36px_-28px_rgba(15,23,42,0.22)]">
+      <CardContent className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+        <div className="min-w-0 space-y-3">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="truncate text-[14px] font-semibold tracking-[-0.02em] text-foreground">
+              {apiKey.name}
+            </h3>
+            <Badge
+              variant={isActive ? "default" : "secondary"}
+              className={
+                isActive
+                  ? "rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] text-emerald-800"
+                  : "rounded-md bg-zinc-100 px-2 py-0.5 text-[10px] text-zinc-600"
+              }
+            >
+              {isActive ? "Active" : "Inactive"}
+            </Badge>
+          </div>
 
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <p className="text-xs font-medium text-gray-500">Key value</p>
-          <div className="flex items-center gap-2">
-            <code className="flex-1 truncate rounded bg-gray-100 px-3 py-2 text-sm font-mono">
+          <div className="flex items-center gap-2 rounded-[14px] border border-slate-200/80 bg-[#f7f8fa] px-3 py-2">
+            <code className="min-w-0 flex-1 truncate text-[12px] font-medium text-slate-700">
               {maskApiKey(apiKey.key)}
             </code>
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="h-8 w-8 shrink-0"
+              className="h-8 rounded-lg border-slate-200 bg-white px-2.5"
               onClick={() => void handleCopyToClipboard()}
               disabled={isCopying}
             >
-              <Clipboard className="h-4 w-4" />
+              {isCopying ? (
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
+              <span className="sr-only">Copy API key</span>
             </Button>
           </div>
+
+          <div className="grid gap-2 sm:grid-cols-3">
+            <div className="rounded-[12px] border border-slate-200/70 bg-white/80 px-3 py-2">
+              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Key ID
+              </p>
+              <code className="mt-1 block truncate text-[11px] font-medium text-slate-700">
+                {apiKey.id.slice(0, 8)}
+              </code>
+            </div>
+            <div className="rounded-[12px] border border-slate-200/70 bg-white/80 px-3 py-2">
+              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Created
+              </p>
+              <p className="mt-1 text-[11px] text-slate-700">{formatDate(apiKey.created_at)}</p>
+            </div>
+            <div className="rounded-[12px] border border-slate-200/70 bg-white/80 px-3 py-2">
+              <p className="text-[10px] font-medium uppercase tracking-[0.16em] text-muted-foreground">
+                Age
+              </p>
+              <p className="mt-1 text-[11px] text-slate-700">
+                {formatDateRelative(apiKey.created_at) || "Recently issued"}
+              </p>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500">ID</p>
-            <code className="block truncate rounded bg-gray-50 px-2 py-1 text-xs font-mono">
-              {apiKey.id.slice(0, 8)}...
-            </code>
-          </div>
-
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-gray-500">Created</p>
-            <p className="text-xs text-gray-600">
-              {formatDate(apiKey.created_at)}
-              {formatDateRelative(apiKey.created_at)
-                ? ` • ${formatDateRelative(apiKey.created_at)}`
-                : ""}
-            </p>
-          </div>
-        </div>
-
-        <div className="flex flex-wrap gap-2 pt-2">
+        <div className="flex flex-wrap items-center gap-2 md:justify-end">
           <Button
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 gap-1 text-xs"
+            className="h-8 rounded-lg border-slate-200 bg-white px-3 text-[11px]"
             onClick={() => void handleToggleActive()}
             disabled={isToggling}
           >
-            {isActive ? "Deactivate" : "Activate"}
+            {isToggling ? (
+              <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Power className="h-3.5 w-3.5" />
+            )}
+            {isActive ? "Disable" : "Enable"}
           </Button>
 
           <Button
             type="button"
             variant="destructive"
             size="sm"
-            className="h-8 gap-1 text-xs"
+            className="h-8 rounded-lg px-3 text-[11px]"
             onClick={() => setShowDeleteDialog(true)}
           >
             <Trash2 className="h-3.5 w-3.5" />

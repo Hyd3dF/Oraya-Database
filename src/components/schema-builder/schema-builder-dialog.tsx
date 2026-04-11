@@ -17,7 +17,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import type { TableDefinition } from "@/lib/sql-generator";
 
 interface SchemaBuilderDialogProps {
@@ -37,18 +36,29 @@ interface SchemaBuilderContentProps {
   onSaved: (tableName: string) => void;
 }
 
-function FieldError({ message }: { message?: string }) {
+function TableHeaderRow() {
   return (
-    <p
-      className="ios-inline-error"
-      style={{
-        maxHeight: message ? 32 : 0,
-        opacity: message ? 1 : 0,
-        marginTop: message ? 8 : 0,
-      }}
-    >
-      {message ?? ""}
-    </p>
+    <div className="sticky top-0 z-10 border-b border-slate-200 bg-[#f3f5f8] px-3 py-2">
+      <div className="grid min-w-[980px] grid-cols-[minmax(150px,1.4fr)_128px_84px_minmax(180px,1.35fr)_72px_72px_72px_36px] gap-2">
+        {[
+          "Column",
+          "Type",
+          "Length",
+          "Default",
+          "PK",
+          "Unique",
+          "Required",
+          "",
+        ].map((label, index) => (
+          <div
+            key={`${label}-${index}`}
+            className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
+          >
+            {label}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -136,21 +146,19 @@ function SchemaBuilderContent({
   }
 
   return (
-    <DialogContent className="h-[94vh] max-w-[1180px] overflow-hidden rounded-[36px] border-white/85 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(247,248,250,0.9))] p-0 shadow-[0_40px_120px_-48px_rgba(15,23,42,0.48)] backdrop-blur-2xl">
-      <DialogHeader className="border-b border-white/80 px-7 pb-6 pt-7">
-        <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-          <div className="space-y-3">
-            <Badge className="w-fit rounded-full bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
+    <DialogContent className="flex h-[88vh] max-w-[1240px] flex-col overflow-hidden rounded-[22px] border border-white/85 bg-white/96 p-0 shadow-[0_36px_120px_-56px_rgba(15,23,42,0.45)] backdrop-blur-2xl">
+      <DialogHeader className="shrink-0 gap-3 border-b border-slate-200/80 px-4 py-4">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
+          <div className="space-y-2">
+            <Badge className="w-fit rounded-md bg-primary/10 px-2.5 py-1 text-[10px] text-primary hover:bg-primary/10">
               {badgeLabel}
             </Badge>
-            <div className="space-y-2">
-              <DialogTitle className="text-[30px] font-semibold tracking-[-0.03em] text-foreground">
+            <div className="space-y-1">
+              <DialogTitle className="text-[20px] font-semibold tracking-[-0.03em] text-foreground">
                 {modeLabel}
               </DialogTitle>
-              <DialogDescription className="max-w-3xl text-[15px] leading-7 text-muted-foreground">
-                Shape the table name and column structure in one calm, readable
-                workspace. When you save, the visual definition is translated into
-                SQL and applied directly to PostgreSQL in the background.
+              <DialogDescription className="max-w-3xl text-[12px] leading-5 text-muted-foreground">
+                Define the table in a dense spreadsheet-style editor, then persist the schema directly to PostgreSQL.
               </DialogDescription>
             </div>
           </div>
@@ -162,9 +170,9 @@ function SchemaBuilderContent({
               size="sm"
               disabled={!canUndo || isSubmitting}
               onClick={undo}
-              className="rounded-full border-white/80 bg-white/80 px-4"
+              className="h-8 rounded-lg border-slate-200 bg-white px-3 text-[11px]"
             >
-              <Undo2 className="h-4 w-4" />
+              <Undo2 className="h-3.5 w-3.5" />
               Undo
             </Button>
             <Button
@@ -173,81 +181,94 @@ function SchemaBuilderContent({
               size="sm"
               disabled={!canRedo || isSubmitting}
               onClick={redo}
-              className="rounded-full border-white/80 bg-white/80 px-4"
+              className="h-8 rounded-lg border-slate-200 bg-white px-3 text-[11px]"
             >
-              <Redo2 className="h-4 w-4" />
+              <Redo2 className="h-3.5 w-3.5" />
               Redo
             </Button>
           </div>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">
-          <div>
-            <p className="ios-caption">Table name</p>
-            <div
-              className="mt-2 ios-field-shell max-w-xl"
-              data-invalid={tableNameError ? "true" : "false"}
-            >
-              <Input
-                value={definition.tableName}
-                onChange={(event) => updateTableName(event.target.value)}
-                placeholder="e.g. users"
-                className="h-16 rounded-[22px] border-0 bg-transparent px-5 text-[17px] font-medium tracking-[-0.01em] shadow-none backdrop-blur-0 focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-            </div>
-            <FieldError message={tableNameError} />
+        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
+          <div className="space-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              Table name
+            </p>
+            <Input
+              value={definition.tableName}
+              onChange={(event) => updateTableName(event.target.value)}
+              placeholder="users"
+              className="h-9 max-w-sm rounded-lg border-slate-200 bg-white px-3 text-[12px] font-medium shadow-none"
+            />
+            {tableNameError ? (
+              <p className="text-[10px] text-destructive">{tableNameError}</p>
+            ) : null}
           </div>
 
-          <div className="flex items-start lg:items-end">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge variant="secondary" className="rounded-md px-2.5 py-1 text-[10px]">
+              {sanitizedDefinition.columns.length} columns
+            </Badge>
             <Button
               type="button"
               onClick={addColumn}
               disabled={isSubmitting}
-              className="h-14 rounded-[22px] px-5 shadow-[0_20px_36px_-24px_rgba(0,122,255,0.55)]"
+              className="h-9 rounded-lg px-3.5 text-[11px] shadow-[0_18px_28px_-20px_rgba(0,122,255,0.45)]"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               Add column
             </Button>
           </div>
         </div>
       </DialogHeader>
 
-      <ScrollArea className="h-full px-7 py-6">
-        <div className="space-y-5 pb-8">
-          {definition.columns.map((column) => (
-            <ColumnRow
-              key={column.id}
-              column={column}
-              primaryKeyCount={primaryKeyCount}
-              errors={errorsByColumnId.get(column.id)}
-              onChange={(patch) => updateColumn(column.id, patch)}
-              onRemove={() => removeColumn(column.id)}
-            />
-          ))}
+      <div className="min-h-0 flex-1 overflow-auto">
+        <div className="min-w-[980px]">
+          <TableHeaderRow />
 
-          {generalErrors.length > 0 ? (
-            <div className="rounded-[24px] border border-amber-400/18 bg-amber-400/10 px-5 py-4 text-sm text-amber-800">
-              {generalErrors.map((error) => error.message).join(" ")}
-            </div>
-          ) : null}
+          <div className="bg-white">
+            {definition.columns.map((column) => (
+              <ColumnRow
+                key={column.id}
+                column={column}
+                primaryKeyCount={primaryKeyCount}
+                errors={errorsByColumnId.get(column.id)}
+                onChange={(patch) => updateColumn(column.id, patch)}
+                onRemove={() => removeColumn(column.id)}
+              />
+            ))}
+
+            {generalErrors.length > 0 ? (
+              <div className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+                {generalErrors.map((error) => error.message).join(" ")}
+              </div>
+            ) : null}
+          </div>
         </div>
-      </ScrollArea>
+      </div>
 
-      <DialogFooter className="border-t border-white/80 px-7 py-5">
-        <div className="flex w-full flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-          <p className="text-sm leading-6 text-muted-foreground">
-            {validationErrors.length === 0
-              ? `${sanitizedDefinition.columns.length} columns are ready to save.`
-              : `${validationErrors.length} validation fields still need attention.`}
-          </p>
+      <DialogFooter className="shrink-0 border-t border-slate-200/80 px-4 py-3">
+        <div className="flex w-full flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+          <div className="space-y-1">
+            <p className="text-[11px] text-muted-foreground">
+              {validationErrors.length === 0
+                ? `${sanitizedDefinition.columns.length} columns are ready to save.`
+                : `${validationErrors.length} validation fields still need attention.`}
+            </p>
+            {primaryKeyCount > 1 ? (
+              <p className="text-[10px] text-amber-700">
+                Multiple primary-key columns will be saved as a composite key.
+              </p>
+            ) : null}
+          </div>
 
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="rounded-full border-white/80 bg-white/80 px-5"
+              className="h-8 rounded-lg border-slate-200 bg-white px-3 text-[11px]"
             >
               Cancel
             </Button>
@@ -255,12 +276,12 @@ function SchemaBuilderContent({
               type="button"
               onClick={() => void handleSubmit()}
               disabled={validationErrors.length > 0 || isSubmitting}
-              className="rounded-full px-5 shadow-[0_20px_36px_-24px_rgba(0,122,255,0.55)]"
+              className="h-8 rounded-lg px-3 text-[11px] shadow-[0_18px_28px_-20px_rgba(0,122,255,0.45)]"
             >
               {isSubmitting ? (
-                <LoaderCircle className="h-4 w-4 animate-spin" />
+                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save className="h-3.5 w-3.5" />
               )}
               Save
             </Button>
