@@ -1,30 +1,23 @@
-import Image from "next/image";
-import { ShieldCheck, Sparkles, Wifi } from "lucide-react";
+import { Plug2, ShieldCheck, Wifi } from "lucide-react";
 
 import { ConnectionForm } from "@/components/connection-form";
-import { PageHeader } from "@/components/page-header";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getConnectionConfigFromCookies, getConnectionStatus } from "@/lib/db";
 
-const highlights = [
+const features = [
   {
-    title: "Encrypted cookie layer",
-    description:
-      "Connection details are stored server-side using AES-GCM encryption.",
+    title: "Secure cookie storage",
+    description: "Connection details are encrypted and stored server-side in httpOnly cookies.",
     icon: ShieldCheck,
   },
   {
-    title: "Live status tracking",
-    description:
-      "The sidebar and settings screen track the same connection status in real-time.",
+    title: "Real-time sync",
+    description: "Connection status is tracked across the sidebar and settings in real-time.",
     icon: Wifi,
   },
   {
-    title: "Fast reconnection",
-    description:
-      "If you leave the password field blank when returning to the same target, the existing secure password is kept.",
-    icon: Sparkles,
+    title: "Password memory",
+    description: "Returning with a blank password keeps your existing secure password.",
+    icon: Plug2,
   },
 ];
 
@@ -35,70 +28,44 @@ export default async function SettingsPage() {
   ]);
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center gap-5">
-        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[22%] bg-white shadow-sm ring-1 ring-black/[0.04]">
-          <Image
-            src="/oroya.png"
-            alt="Oroya Logo"
-            fill
-            className="object-contain"
-            priority
-          />
-        </div>
-        <PageHeader
-          eyebrow="Connection Management"
-          title="Manage your PostgreSQL connection in real-time"
-          description="The placeholder layer has been removed. This screen now establishes a real connection via secure cookies, verifies the status, and syncs with the sidebar."
-        />
+    <div className="mx-auto max-w-3xl px-6 py-12">
+      <div className="mb-8">
+        <h1 className="text-2xl font-semibold text-zinc-100 tracking-tight">Database Connection</h1>
+        <p className="mt-1.5 text-sm text-zinc-500">Connect to your PostgreSQL database.</p>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <Card className="surface-panel border-white/80">
-          <CardHeader className="space-y-3">
-            <Badge className="w-fit rounded-full bg-primary/10 px-3 py-1 text-primary hover:bg-primary/10">
-              Active form
-            </Badge>
-            <CardTitle className="text-2xl font-semibold tracking-tight">
-              Database connection
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ConnectionForm
-              initialStatus={status}
-              initialValues={{
-                host: config?.host ?? "",
-                port: config?.port ?? 5432,
-                user: config?.user ?? "",
-                database: config?.database ?? "",
-              }}
-            />
-          </CardContent>
-        </Card>
-
-        <div className="grid gap-5">
-          {highlights.map((item) => {
-            const Icon = item.icon;
-
-            return (
-              <Card key={item.title} className="glass-panel border-white/80">
-                <CardContent className="flex gap-4 p-6">
-                  <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-                    <Icon className="size-5" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg font-semibold text-foreground">
-                      {item.title}
-                    </h2>
-                    <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                      {item.description}
-                    </p>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+      <div className="overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/40 shadow-xl shadow-black/20">
+        <div className="p-6">
+          <ConnectionForm
+            initialStatus={status}
+            initialValues={{
+              host: config?.host ?? "",
+              port: config?.port ?? 5432,
+              user: config?.user ?? "",
+              database: config?.database ?? "",
+            }}
+          />
         </div>
+      </div>
+
+      <div className="mt-6 grid gap-3">
+        {features.map((feature) => {
+          const Icon = feature.icon;
+          return (
+            <div
+              key={feature.title}
+              className="flex items-start gap-3 rounded-lg border border-zinc-800/40 bg-zinc-900/20 px-4 py-3"
+            >
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/5">
+                <Icon className="h-4 w-4 text-zinc-500" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-zinc-300">{feature.title}</p>
+                <p className="mt-0.5 text-xs text-zinc-500">{feature.description}</p>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

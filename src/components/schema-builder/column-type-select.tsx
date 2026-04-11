@@ -79,21 +79,25 @@ export function ColumnTypeSelect({
         <SelectTrigger
           aria-label="Column data type"
           title={description}
-          className="h-8 rounded-md border-slate-200 bg-white px-2 text-[11px] font-medium shadow-none focus:ring-1"
+          className="h-8 rounded-lg border border-zinc-800 bg-white/5 px-2.5 text-xs font-medium text-zinc-400 shadow-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50 data-[placeholder]:text-zinc-700"
         >
-          <SelectValue placeholder="Choose a type" />
+          <SelectValue placeholder="Type" />
         </SelectTrigger>
-        <SelectContent className="rounded-lg border-slate-200 bg-white/95 backdrop-blur-xl">
+        <SelectContent className="rounded-lg border border-zinc-800 bg-zinc-900 shadow-xl shadow-black/20">
           {dataTypeGroups.map((group) => (
             <SelectGroup key={group.label}>
-              <SelectLabel className="px-2 py-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              <SelectLabel className="px-2 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
                 {group.label}
               </SelectLabel>
               {group.items.map((item) => (
-                <SelectItem key={item.value} value={item.value} className="py-1 pl-2 pr-7 text-[11px]">
-                  <div className="flex min-w-[160px] items-center justify-between gap-3">
-                    <span>{item.value.toUpperCase()}</span>
-                    <span className="text-[10px] text-muted-foreground">{group.label}</span>
+                <SelectItem
+                  key={item.value}
+                  value={item.value}
+                  className="py-1.5 pl-2 pr-8 text-xs text-zinc-400 focus:bg-white/10 focus:text-zinc-200"
+                >
+                  <div className="flex min-w-[140px] items-center justify-between gap-3">
+                    <span className="font-medium uppercase">{item.value}</span>
+                    <span className="text-[10px] text-zinc-600">{group.label}</span>
                   </div>
                 </SelectItem>
               ))}

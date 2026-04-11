@@ -2,7 +2,7 @@
 
 import { startTransition, useState } from "react";
 import { useRouter } from "next/navigation";
-import { CheckCircle2, LoaderCircle, Plug2, RotateCcw, ShieldCheck, Unplug } from "lucide-react";
+import { CheckCircle2, LoaderCircle, Plug2, RotateCcw, Unplug } from "lucide-react";
 import { toast } from "sonner";
 
 import type { ConnectionInput, ConnectionStatus } from "@/lib/shared";
@@ -24,28 +24,16 @@ interface ConnectionFormState {
   database: string;
 }
 
-function getStatusTone(status: ConnectionStatus) {
-  if (status.connected) {
-    return {
-      dotClassName: "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.14)]",
-      title: "Connection active",
-      description: `Connected to ${status.database}.`,
-    };
-  }
+function getStatusColor(status: ConnectionStatus) {
+  if (status.connected) return "bg-emerald-500";
+  if (status.configured) return "bg-amber-500";
+  return "bg-zinc-500";
+}
 
-  if (status.configured) {
-    return {
-      dotClassName: "bg-amber-400 shadow-[0_0_0_4px_rgba(251,191,36,0.18)]",
-      title: "Connection could not be verified",
-      description: status.error ?? status.message,
-    };
-  }
-
-  return {
-    dotClassName: "bg-zinc-300 shadow-[0_0_0_4px_rgba(161,161,170,0.16)]",
-    title: "Waiting for connection",
-    description: "Enter connection information and connect to the database.",
-  };
+function getStatusText(status: ConnectionStatus) {
+  if (status.connected) return "Connected";
+  if (status.configured) return "Unreachable";
+  return "Disconnected";
 }
 
 export function ConnectionForm({
@@ -63,7 +51,6 @@ export function ConnectionForm({
     database: initialValues.database,
   });
 
-  const statusTone = getStatusTone(status);
   const hasStoredConnection =
     Boolean(initialValues.host) &&
     Boolean(initialValues.user) &&
@@ -104,7 +91,6 @@ export function ConnectionForm({
       }
 
       dispatchConnectionStatusChanged();
-      toast.success("Database connection established.");
       setForm((current) => ({
         ...current,
         password: "",
@@ -114,7 +100,7 @@ export function ConnectionForm({
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "An error occurred while establishing the connection.",
+        error instanceof Error ? error.message : "Connection failed.",
       );
     } finally {
       setIsSubmitting(false);
@@ -135,13 +121,12 @@ export function ConnectionForm({
       }
 
       dispatchConnectionStatusChanged();
-      toast.success("Connection terminated.");
       startTransition(() => {
         router.refresh();
       });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "An error occurred while terminating the connection.",
+        error instanceof Error ? error.message : "Disconnect failed.",
       );
     } finally {
       setIsSubmitting(false);
@@ -149,138 +134,117 @@ export function ConnectionForm({
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleConnect}>
-      <div className="rounded-[28px] border border-white/80 bg-white/76 p-5 shadow-soft">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div className="flex items-start gap-3">
-            <span className={`status-dot ${statusTone.dotClassName}`} />
-            <div>
-              <p className="text-sm font-semibold text-foreground">
-                {statusTone.title}
-              </p>
-              <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                {statusTone.description}
-              </p>
-            </div>
-          </div>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => void refresh()}
-            disabled={isRefreshing || isSubmitting}
-          >
-            {isRefreshing ? (
-              <LoaderCircle className="size-4 animate-spin" />
-            ) : (
-              <RotateCcw className="size-4" />
-            )}
-            Refresh Status
-          </Button>
+    <form onSubmit={handleConnect}>
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className={`h-2.5 w-2.5 rounded-full ${getStatusColor(status)} shadow-sm`} />
+          <span className="text-sm font-medium text-zinc-300">{getStatusText(status)}</span>
+          {status.connected && status.database && (
+            <span className="text-xs text-zinc-500">{status.host} / {status.database}</span>
+          )}
         </div>
+        <button
+          type="button"
+          onClick={() => void refresh()}
+          className="flex h-8 items-center gap-1.5 rounded-lg px-2.5 text-xs text-zinc-500 transition-colors hover:bg-white/5 hover:text-zinc-300"
+        >
+          <RotateCcw className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`} />
+          Refresh
+        </button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="space-y-2">
-          <Label htmlFor="db-host">Host</Label>
-          <Input
-            id="db-host"
-            value={form.host}
-            onChange={(event) => updateField("host", event.target.value)}
-            placeholder="localhost"
-            autoComplete="off"
-          />
+      <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="db-host" className="text-xs text-zinc-400">Host</Label>
+            <Input
+              id="db-host"
+              value={form.host}
+              onChange={(event) => updateField("host", event.target.value)}
+              placeholder="localhost"
+              autoComplete="off"
+              className="h-9 rounded-lg border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="db-port" className="text-xs text-zinc-400">Port</Label>
+            <Input
+              id="db-port"
+              value={form.port}
+              onChange={(event) => updateField("port", event.target.value)}
+              inputMode="numeric"
+              placeholder="5432"
+              className="h-9 rounded-lg border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50"
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="db-port">Port</Label>
-          <Input
-            id="db-port"
-            value={form.port}
-            onChange={(event) => updateField("port", event.target.value)}
-            inputMode="numeric"
-            placeholder="5432"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="db-user" className="text-xs text-zinc-400">User</Label>
+            <Input
+              id="db-user"
+              value={form.user}
+              onChange={(event) => updateField("user", event.target.value)}
+              autoComplete="username"
+              className="h-9 rounded-lg border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="db-password" className="text-xs text-zinc-400">Password</Label>
+            <Input
+              id="db-password"
+              type="password"
+              value={form.password}
+              onChange={(event) => updateField("password", event.target.value)}
+              autoComplete="current-password"
+              placeholder={hasStoredConnection ? "Saved" : "Password"}
+              className="h-9 rounded-lg border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50"
+            />
+          </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="db-user">User</Label>
-          <Input
-            id="db-user"
-            value={form.user}
-            onChange={(event) => updateField("user", event.target.value)}
-            autoComplete="username"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="db-password">Password</Label>
-          <Input
-            id="db-password"
-            type="password"
-            value={form.password}
-            onChange={(event) => updateField("password", event.target.value)}
-            autoComplete="current-password"
-            placeholder={
-              hasStoredConnection ? "Leave blank to keep existing password" : "Password"
-            }
-          />
-        </div>
-
-        <div className="space-y-2 md:col-span-2">
-          <Label htmlFor="db-database">Database</Label>
+        <div className="space-y-1.5">
+          <Label htmlFor="db-database" className="text-xs text-zinc-400">Database</Label>
           <Input
             id="db-database"
             value={form.database}
             onChange={(event) => updateField("database", event.target.value)}
             autoComplete="off"
+            className="h-9 rounded-lg border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50"
           />
         </div>
       </div>
 
-      <div className="rounded-[28px] border border-primary/10 bg-primary/[0.04] p-4">
-        <div className="flex items-start gap-3">
-          <div className="mt-0.5 flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <ShieldCheck className="size-5" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">
-              Secure cookie storage
-            </p>
-            <p className="mt-1 text-sm leading-6 text-muted-foreground">
-              Connection information is not written to client storage. It is kept in an encrypted `httpOnly` cookie on the server side.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-3">
-        <Button type="submit" disabled={isSubmitting}>
+      <div className="mt-6 flex items-center gap-3">
+        <Button
+          type="submit"
+          disabled={isSubmitting || !form.host || !form.user || !form.database}
+          className="h-9 rounded-lg bg-white text-sm font-medium text-zinc-900 hover:bg-zinc-200 disabled:opacity-50"
+        >
           {isSubmitting ? (
-            <LoaderCircle className="size-4 animate-spin" />
+            <LoaderCircle className="h-4 w-4 animate-spin" />
           ) : (
-            <Plug2 className="size-4" />
+            <Plug2 className="mr-1.5 h-4 w-4" />
           )}
           Connect
         </Button>
-
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           onClick={() => void handleDisconnect()}
           disabled={isSubmitting || !status.configured}
+          className="h-9 rounded-lg text-sm text-zinc-400 hover:bg-white/5 hover:text-zinc-300 disabled:opacity-50"
         >
-          <Unplug className="size-4" />
+          <Unplug className="mr-1.5 h-4 w-4" />
           Disconnect
         </Button>
-
-        {status.connected ? (
-          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/15 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-700">
-            <CheckCircle2 className="size-4" />
-            {status.host} / {status.database}
+        {status.connected && (
+          <div className="ml-auto flex items-center gap-1.5 text-xs text-emerald-500">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {status.database}
           </div>
-        ) : null}
+        )}
       </div>
     </form>
   );

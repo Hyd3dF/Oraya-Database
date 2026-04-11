@@ -82,7 +82,6 @@ export function ApiKeyCard({
 
     try {
       await navigator.clipboard.writeText(apiKey.key);
-      toast.success("API key copied to clipboard.");
     } catch {
       toast.error("Copy failed.");
     } finally {

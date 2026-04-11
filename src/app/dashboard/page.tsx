@@ -9,12 +9,10 @@ import {
   useState,
 } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { PencilLine, RefreshCcw, Table2 } from "lucide-react";
 import { toast } from "sonner";
+import { Database, LoaderCircle, Pencil, Plus, Trash2, Table2 } from "lucide-react";
 
 import { DataTable } from "@/components/data-table";
-import { PageHeader } from "@/components/page-header";
 import { SchemaBuilderDialog } from "@/components/schema-builder/schema-builder-dialog";
 import { TableList, type TableListItem } from "@/components/table-list";
 import {
@@ -27,11 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useConnection } from "@/hooks/use-connection";
 import type { ConnectionStatus } from "@/lib/shared";
 import type { TableDefinition } from "@/lib/sql-generator";
@@ -67,6 +62,29 @@ const initialConnectionStatus: ConnectionStatus = {
   checkedAt: "",
 };
 
+function ToolbarButton({
+  children,
+  onClick,
+  disabled,
+  className,
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  disabled?: boolean;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-400 transition-all hover:bg-white/10 hover:text-zinc-200 disabled:cursor-not-allowed disabled:opacity-40 ${className ?? ""}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function DashboardPage() {
   const router = useRouter();
   const {
@@ -88,6 +106,7 @@ export default function DashboardPage() {
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeletingTable, setIsDeletingTable] = useState(false);
   const [offset, setOffset] = useState(0);
+  const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set());
 
   const deferredSelectedTableName = useDeferredValue(selectedTableName);
 
@@ -107,7 +126,7 @@ export default function DashboardPage() {
       const mappedTables = payload.tables.map<TableListItem>((table) => ({
         name: table.name,
         rowCount: table.rowCountEstimate ?? 0,
-        metaLabel: `${table.columnCount} columns${table.hasPrimaryKey ? " · primary key" : ""}`,
+        metaLabel: `${table.columnCount} cols${table.hasPrimaryKey ? " · pk" : ""}`,
         description: "Live database schema",
       }));
 
@@ -116,7 +135,6 @@ export default function DashboardPage() {
         if (current && mappedTables.some((table) => table.name === current)) {
           return current;
         }
-
         return mappedTables[0]?.name ?? "";
       });
     } catch (error) {
@@ -137,11 +155,12 @@ export default function DashboardPage() {
       }
 
       setIsLoadingDetails(true);
+      setSelectedRows(new Set());
 
       try {
         const [schemaResponse, dataResponse] = await Promise.all([
           fetch(`/api/tables/${tableName}`, { cache: "no-store" }),
-          fetch(`/api/tables/${tableName}/data?limit=25&offset=${nextOffset}`, {
+          fetch(`/api/tables/${tableName}/data?limit=100&offset=${nextOffset}`, {
             cache: "no-store",
           }),
         ]);
@@ -194,26 +213,6 @@ export default function DashboardPage() {
     void loadTableDetails(deferredSelectedTableName, offset);
   }, [deferredSelectedTableName, loadTableDetails, offset, status.connected]);
 
-  const schemaPreviewRows = useMemo(
-    () =>
-      selectedDefinition?.columns.map((column) => ({
-        name: column.name,
-        type:
-          column.length && (column.type === "varchar" || column.type === "char")
-            ? `${column.type}(${column.length})`
-            : column.type,
-        constraints: [
-          column.isPrimaryKey ? "Primary key" : null,
-          column.isUnique ? "Unique" : null,
-          column.isNotNull ? "Required" : null,
-        ]
-          .filter(Boolean)
-          .join(" · "),
-        defaultValue: column.defaultValue || "",
-      })) ?? [],
-    [selectedDefinition],
-  );
-
   const dataColumns = useMemo(
     () =>
       (tableData?.columns ?? []).map((column) => ({
@@ -250,6 +249,7 @@ export default function DashboardPage() {
   function handleBuilderSaved(tableName: string) {
     setOffset(0);
     setSelectedTableName(tableName);
+    setSelectedRows(new Set());
     startTransition(() => {
       router.refresh();
     });
@@ -283,6 +283,7 @@ export default function DashboardPage() {
       setDeleteTableName(null);
       setDeleteConfirmation("");
       setOffset(0);
+      setSelectedRows(new Set());
       await loadTables();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Unable to delete the table.");
@@ -291,72 +292,82 @@ export default function DashboardPage() {
     }
   }
 
+  function toggleRowSelection(index: number) {
+    setSelectedRows((prev) => {
+      const next = new Set(prev);
+      if (next.has(index)) {
+        next.delete(index);
+      } else {
+        next.add(index);
+      }
+      return next;
+    });
+  }
+
+  function toggleAllRows() {
+    if (!tableData) return;
+    if (selectedRows.size === tableData.rows.length) {
+      setSelectedRows(new Set());
+    } else {
+      setSelectedRows(new Set(Array.from({ length: tableData.rows.length }, (_, i) => i)));
+    }
+  }
+
+  const isLoading = isLoadingTables || isLoadingDetails || isRefreshingConnection;
+
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      <div className="rounded-[28px] border border-white/75 bg-white/72 p-4 shadow-soft backdrop-blur-xl">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-          <div className="space-y-3">
-            <PageHeader
-              eyebrow="Explorer & Schema Builder"
-              title="Run the database like a native desktop workspace"
-              description="Tables stay docked on the left, schema context stays visible, and the active data grid behaves like a dense spreadsheet instead of a long web page."
-            />
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-zinc-800/60 bg-zinc-900/40 px-4">
+        <div className="flex items-center gap-3">
+          <h1 className="text-sm font-medium text-zinc-200">
+            {selectedDefinition?.tableName ?? "No table selected"}
+          </h1>
+          {selectedDefinition && (
+            <>
+              <span className="text-zinc-700">·</span>
+              <span className="text-xs text-zinc-500">
+                {selectedDefinition.columns.length} columns
+              </span>
+              <span className="text-zinc-700">·</span>
+              <span className="text-xs text-zinc-500">
+                {tableData?.totalCount.toLocaleString() ?? 0} rows
+              </span>
+            </>
+          )}
+        </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge className="rounded-md bg-primary/10 px-2.5 py-1 text-[10px] text-primary hover:bg-primary/10">
-                {tables.length} tables
-              </Badge>
-              {selectedDefinition ? (
-                <Badge
-                  variant="secondary"
-                  className="rounded-md px-2.5 py-1 text-[10px]"
-                >
-                  {selectedDefinition.tableName}
-                </Badge>
-              ) : null}
-              {status.connected ? (
-                <Badge className="rounded-md bg-emerald-500/12 px-2.5 py-1 text-[10px] text-emerald-700 hover:bg-emerald-500/12">
-                  {status.host} / {status.database}
-                </Badge>
-              ) : null}
-            </div>
-          </div>
+        <div className="flex items-center gap-0.5">
+          <ToolbarButton onClick={openCreateDialog}>
+            <Plus className="h-3.5 w-3.5" />
+            Insert Row
+          </ToolbarButton>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => void handleRefreshDashboard()}
-              disabled={isLoadingTables || isLoadingDetails || isRefreshingConnection}
-              className="h-9 rounded-xl border-white/80 bg-white/88 px-4 text-[12px]"
-            >
-              <RefreshCcw
-                className={[
-                  "h-4 w-4",
-                  isLoadingTables || isLoadingDetails || isRefreshingConnection
-                    ? "animate-spin"
-                    : "",
-                ].join(" ")}
-              />
-              Refresh Data
-            </Button>
-          </div>
+          {selectedDefinition && (
+            <>
+              <div className="mx-1 h-5 w-px bg-zinc-800" />
+              <ToolbarButton onClick={openEditDialog}>
+                <Pencil className="h-3.5 w-3.5" />
+                Edit Schema
+              </ToolbarButton>
+              <ToolbarButton onClick={() => { setDeleteTableName(selectedDefinition.tableName); setDeleteConfirmation(""); }}>
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </ToolbarButton>
+            </>
+          )}
+
+          <div className="mx-1 h-5 w-px bg-zinc-800" />
+
+          <ToolbarButton onClick={() => void handleRefreshDashboard()} disabled={isLoading}>
+            <LoaderCircle className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+            Refresh
+          </ToolbarButton>
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 gap-4 xl:grid-cols-[310px_minmax(0,1fr)]">
-        {isLoadingTables ? (
-          <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-[26px] border-white/80 bg-white/84">
-            <CardContent className="space-y-3 p-4">
-              <Skeleton className="h-10 rounded-[16px] bg-white/75" />
-              <Skeleton className="h-20 rounded-[18px] bg-white/70" />
-              <Skeleton className="h-20 rounded-[18px] bg-white/65" />
-              <Skeleton className="h-20 rounded-[18px] bg-white/60" />
-            </CardContent>
-          </Card>
-        ) : (
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-[220px] shrink-0 border-r border-zinc-800/60">
           <TableList
-            className="min-h-0"
             tables={tables}
             selectedTableName={selectedTableName}
             onSelectTable={(tableName) => {
@@ -369,143 +380,49 @@ export default function DashboardPage() {
               setDeleteConfirmation("");
             }}
           />
-        )}
+        </div>
 
-        <div className="min-h-0">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {selectedDefinition ? (
-            <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border-white/80 bg-white/82">
-              <CardHeader className="shrink-0 gap-4 border-b border-slate-200/70 px-4 py-4 lg:flex-row lg:items-center lg:justify-between">
-                <div className="flex min-w-0 items-center gap-3">
-                  <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[18%] bg-white shadow-sm ring-1 ring-black/[0.04]">
-                    <Image
-                      src="/oroya.png"
-                      alt="Oroya Logo"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                  <div className="min-w-0 space-y-2">
-                    <CardTitle className="truncate text-[20px] font-semibold tracking-[-0.03em]">
-                      {selectedDefinition.tableName}
-                    </CardTitle>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className="rounded-md bg-primary/10 px-2.5 py-1 text-[10px] text-primary hover:bg-primary/10">
-                        {selectedDefinition.columns.length} columns
-                      </Badge>
-                      <Badge variant="secondary" className="rounded-md px-2.5 py-1 text-[10px]">
-                        {tableData?.totalCount ?? 0} rows
-                      </Badge>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={openEditDialog}
-                    className="h-9 rounded-xl border-white/80 bg-white/88 px-4 text-[12px]"
-                  >
-                    <PencilLine className="h-4 w-4" />
-                    Edit Schema
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    className="h-9 rounded-xl px-4 text-[12px]"
-                    onClick={() => {
-                      setDeleteTableName(selectedDefinition.tableName);
-                      setDeleteConfirmation("");
-                    }}
-                  >
-                    Delete Table
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent className="flex min-h-0 flex-1 flex-col gap-4 p-4">
-                <DataTable
-                  title="Column Schema"
-                  description="Field types, defaults, and constraints in a compact structural view."
-                  columns={[
-                    { key: "name", label: "Column" },
-                    { key: "type", label: "Type" },
-                    { key: "constraints", label: "Constraints" },
-                    { key: "defaultValue", label: "Default" },
-                  ]}
-                  rows={schemaPreviewRows}
-                  emptyState="No column details are available for this table yet."
-                  viewportClassName="max-h-[220px]"
-                />
-
-                <div className="flex min-h-0 flex-1 flex-col gap-3">
-                  {tableData ? (
-                    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[18px] border border-slate-200/80 bg-[#f8f9fb] px-4 py-3">
-                      <p className="text-[12px] text-muted-foreground">
-                        Showing {tableData.offset + 1}-
-                        {Math.min(tableData.offset + tableData.rows.length, tableData.totalCount)} of{" "}
-                        {tableData.totalCount} rows
-                      </p>
-                      <div className="flex gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-lg border-white/80 bg-white/90 px-3 text-[11px]"
-                          disabled={tableData.offset === 0 || isLoadingDetails}
-                          onClick={() =>
-                            setOffset((current) => Math.max(current - tableData.limit, 0))
-                          }
-                        >
-                          Previous
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="rounded-lg border-white/80 bg-white/90 px-3 text-[11px]"
-                          disabled={
-                            tableData.offset + tableData.limit >= tableData.totalCount ||
-                            isLoadingDetails
-                          }
-                          onClick={() => setOffset((current) => current + tableData.limit)}
-                        >
-                          Next
-                        </Button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  <DataTable
-                    title="Row Preview"
-                    description={`Spreadsheet-style preview of the first ${tableData?.limit ?? 25} live records.`}
-                    columns={dataColumns}
-                    rows={tableData?.rows ?? []}
-                    emptyState="There are no rows to preview for the selected table."
-                    className="min-h-0 flex-1"
-                    contentClassName="min-h-0 flex-1"
-                    viewportClassName="min-h-0 flex-1"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+            <DataTable
+              dataColumns={dataColumns}
+              dataRows={tableData?.rows ?? []}
+              selectedRows={selectedRows}
+              onToggleRow={toggleRowSelection}
+              onToggleAllRows={toggleAllRows}
+              offset={tableData?.offset ?? 0}
+              totalCount={tableData?.totalCount ?? 0}
+              limit={tableData?.limit ?? 100}
+              isLoadingDetails={isLoadingDetails}
+              onPrevPage={() =>
+                setOffset((current) => Math.max(current - (tableData?.limit ?? 100), 0))
+              }
+              onNextPage={() =>
+                setOffset((current) => current + (tableData?.limit ?? 100))
+              }
+            />
           ) : (
-            <Card className="flex h-full min-h-0 flex-col overflow-hidden rounded-[28px] border-white/80 bg-white/78">
-              <CardContent className="flex h-full min-h-[360px] flex-col items-center justify-center gap-4 p-6 text-center">
-                <div className="flex h-14 w-14 items-center justify-center rounded-[20px] bg-primary/10 text-primary">
-                  <Table2 className="h-5 w-5" />
+            <div className="flex flex-1 flex-col items-center justify-center bg-zinc-900/40">
+              <div className="text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-white/5">
+                  <Database className="h-6 w-6 text-zinc-500" />
                 </div>
-                <div>
-                  <h2 className="text-[26px] font-semibold tracking-[-0.03em] text-foreground">
-                    No table selected
-                  </h2>
-                  <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
-                    Choose a table from the left rail or create a new one to open its schema and data grid.
-                  </p>
-                </div>
-                <Button type="button" onClick={openCreateDialog} className="rounded-xl px-4 text-[12px]">
-                  Create Your First Table
+                <h2 className="text-sm font-medium text-zinc-400">
+                  Select a table to view data
+                </h2>
+                <p className="mt-2 text-xs text-zinc-600">
+                  Choose a table from the sidebar or create a new one
+                </p>
+                <Button
+                  type="button"
+                  onClick={openCreateDialog}
+                  className="mt-4 flex h-9 items-center gap-1.5 rounded-lg bg-white px-4 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  New Table
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
         </div>
       </div>
@@ -528,33 +445,37 @@ export default function DashboardPage() {
           }
         }}
       >
-        <AlertDialogContent className="rounded-[32px] border-white/80 bg-white/95 shadow-panel backdrop-blur-2xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-destructive">
-              Permanently delete table
+        <AlertDialogContent className="max-w-sm rounded-xl border border-zinc-800/60 bg-zinc-900 shadow-xl shadow-black/20">
+          <AlertDialogHeader className="gap-3">
+            <AlertDialogTitle className="flex items-center gap-2.5 text-sm font-semibold text-zinc-100">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-white/5 text-zinc-400">
+                <Trash2 className="h-4 w-4" />
+              </span>
+              Delete Table
             </AlertDialogTitle>
-            <AlertDialogDescription className="leading-6">
-              This action cannot be undone. Type <strong>{deleteTableName}</strong> exactly to confirm.
+            <AlertDialogDescription className="text-xs leading-relaxed text-zinc-500">
+              This will permanently delete <span className="font-medium text-zinc-300">{deleteTableName}</span> and all its data. Type the table name to confirm.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="space-y-2">
-            <Input
-              value={deleteConfirmation}
-              onChange={(event) => setDeleteConfirmation(event.target.value)}
-              placeholder={deleteTableName ?? "Table name"}
-            />
-          </div>
+          <Input
+            value={deleteConfirmation}
+            onChange={(event) => setDeleteConfirmation(event.target.value)}
+            placeholder={deleteTableName ?? "Table name"}
+            className="h-9 rounded-lg border-zinc-800 bg-white/5 text-xs text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50"
+          />
 
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeletingTable}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="gap-2">
+            <AlertDialogCancel className="h-9 rounded-lg border border-zinc-800 bg-white/5 px-4 text-xs font-medium text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={deleteConfirmation !== deleteTableName || isDeletingTable}
               onClick={(event) => {
                 event.preventDefault();
                 void handleDeleteTable();
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="h-9 rounded-lg bg-white px-4 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-200 active:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isDeletingTable ? "Deleting..." : "Delete Table"}
             </AlertDialogAction>

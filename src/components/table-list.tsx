@@ -1,11 +1,7 @@
 "use client";
 
-import { Database, Plus, Trash2 } from "lucide-react";
+import { Database, Plus } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 export interface TableListItem {
@@ -32,142 +28,99 @@ export function TableList({
   onDeleteTable,
   className,
 }: TableListProps) {
-  const selectedTable =
-    tables.find((table) => table.name === selectedTableName) ?? null;
-
   return (
-    <Card
-      className={cn(
-        "flex h-full min-h-0 flex-col overflow-hidden rounded-[26px] border-white/80 bg-white/84",
-        className,
-      )}
-    >
-      <CardHeader className="shrink-0 space-y-3 border-b border-slate-200/70 px-4 py-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="space-y-1">
-            <CardTitle className="text-[16px] font-semibold tracking-[-0.02em]">
-              Tables
-            </CardTitle>
-            <p className="max-w-xs text-[12px] leading-5 text-muted-foreground">
-              {tables.length} schema objects available for live inspection.
-            </p>
-          </div>
-          <Button
-            onClick={onCreateTable}
-            className="h-9 shrink-0 rounded-xl px-3.5 text-[12px] shadow-[0_20px_36px_-24px_rgba(0,122,255,0.55)]"
-          >
-            <Plus className="size-4" />
-            New Table
-          </Button>
-        </div>
-      </CardHeader>
+    <div className={cn("flex h-full flex-col bg-zinc-900/40", className)}>
+      <div className="flex h-11 shrink-0 items-center justify-between border-b border-zinc-800/60 px-4">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">
+          Tables
+        </span>
+        <span className="flex h-5 min-w-[24px] items-center justify-center rounded-md bg-white/5 px-2 text-[10px] font-medium text-zinc-500">
+          {tables.length}
+        </span>
+      </div>
 
-      <CardContent className="flex min-h-0 flex-1 flex-col gap-3 p-3">
-        <ScrollArea className="min-h-0 flex-1 pr-1">
-          <div className="space-y-2 pr-3">
-            {tables.map((table) => {
-              const isSelected = table.name === selectedTableName;
+      <div className="flex-1 overflow-y-auto">
+        {tables.map((table, index) => {
+          const isSelected = table.name === selectedTableName;
 
-              return (
-                <div
-                  key={table.name}
-                  onClick={() => onSelectTable(table.name)}
-                  role="button"
-                  tabIndex={0}
-                   onKeyDown={(event) => {
-                     if (event.key === "Enter" || event.key === " ") {
-                       event.preventDefault();
-                       onSelectTable(table.name);
-                     }
-                   }}
-                   className={cn(
-                     "group w-full rounded-[18px] border px-3.5 py-3 text-left transition-all duration-200 ease-out focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30",
-                     isSelected
-                       ? "border-primary/16 bg-primary/[0.075] shadow-[0_22px_48px_-36px_rgba(0,122,255,0.38)]"
-                       : "border-white/82 bg-white/76 hover:-translate-y-0.5 hover:border-white/95 hover:bg-white/88",
-                   )}
-                 >
-                   <div className="flex items-start justify-between gap-3">
-                     <div className="min-w-0 flex-1">
-                       <div className="flex items-center gap-3">
-                         <div
-                           className={cn(
-                             "flex size-9 items-center justify-center rounded-[14px] transition-colors",
-                             isSelected
-                               ? "bg-primary text-primary-foreground"
-                               : "bg-muted/90 text-muted-foreground group-hover:text-foreground",
-                           )}
-                         >
-                           <Database className="size-4" />
-                         </div>
-                          <div className="min-w-0 space-y-1">
-                           <p className="truncate text-[13px] font-semibold tracking-[-0.01em] text-foreground">
-                             {table.name}
-                           </p>
-                           <p className="truncate text-[11px] leading-4 text-muted-foreground">
-                             {table.description ?? "Schema and row preview"}
-                           </p>
-                         </div>
-                       </div>
-                    </div>
+          return (
+            <div
+              key={table.name}
+              onClick={() => onSelectTable(table.name)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onSelectTable(table.name);
+                }
+              }}
+              className={cn(
+                "flex items-center gap-3 border-b border-zinc-800/40 px-4 py-3 cursor-pointer transition-all duration-100",
+                isSelected
+                  ? "bg-white/5"
+                  : "hover:bg-white/5",
+              )}
+            >
+              <span className={cn(
+                "flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-[10px] font-semibold transition-colors",
+                isSelected 
+                  ? "bg-white/10 text-zinc-300" 
+                  : "bg-white/5 text-zinc-600"
+              )}>
+                {index + 1}
+              </span>
 
-                    <Badge
-                      variant={isSelected ? "default" : "secondary"}
-                      className="rounded-md px-2 py-0.5 text-[10px]"
-                    >
-                      {isSelected ? "Selected" : `${table.rowCount ?? 0} rows`}
-                    </Badge>
-                  </div>
+              <div className={cn(
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors",
+                isSelected ? "text-zinc-400" : "text-zinc-600"
+              )}>
+                <Database className="h-4 w-4" />
+              </div>
 
-                  <div className="mt-3 flex items-center justify-between gap-3 border-t border-white/70 pt-2.5">
-                    <p className="truncate text-[11px] leading-4 text-muted-foreground">
-                      {table.metaLabel ?? `Estimated rows: ${table.rowCount ?? 0}`}
-                    </p>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 rounded-lg px-2.5 text-[11px] text-destructive/90 hover:bg-destructive/10 hover:text-destructive"
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onDeleteTable(table.name);
-                      }}
-                    >
-                      <Trash2 className="size-4" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
-
-        {selectedTable ? (
-          <div className="rounded-[18px] border border-destructive/15 bg-[linear-gradient(180deg,rgba(255,59,48,0.08),rgba(255,59,48,0.04))] p-3.5">
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-1">
-                <p className="text-[13px] font-semibold text-foreground">
-                  Remove selected table
+              <div className="min-w-0 flex-1">
+                <p
+                  className={cn(
+                    "truncate text-sm font-medium leading-tight transition-colors",
+                    isSelected ? "text-zinc-200" : "text-zinc-400",
+                  )}
+                >
+                  {table.name}
                 </p>
-                <p className="text-[11px] leading-5 text-muted-foreground">
-                  Shortcut only. Final removal still requires dialog confirmation.
+                <p className="truncate text-[10px] leading-tight text-zinc-600">
+                  {table.metaLabel}
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="destructive"
-                size="sm"
-                className="rounded-lg px-3 text-[11px]"
-                onClick={() => onDeleteTable(selectedTable.name)}
-              >
-                <Trash2 className="size-4" />
-                {selectedTable.name}
-              </Button>
+
+              <span className={cn(
+                "shrink-0 rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium tabular-nums transition-colors",
+                isSelected ? "text-zinc-500" : "text-zinc-600",
+              )}>
+                {table.rowCount?.toLocaleString() ?? 0}
+              </span>
             </div>
+          );
+        })}
+
+        {tables.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 px-4">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-white/5">
+              <Database className="h-5 w-5 text-zinc-600" />
+            </div>
+            <p className="text-sm font-medium text-zinc-500">No tables yet</p>
+            <p className="mt-1 text-xs text-zinc-600">
+              Create your first table to get started
+            </p>
+            <button
+              onClick={onCreateTable}
+              className="mt-4 flex items-center gap-1.5 rounded-lg bg-white px-3 py-2 text-xs font-medium text-zinc-900 transition-colors hover:bg-zinc-200"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              New Table
+            </button>
           </div>
-        ) : null}
-      </CardContent>
-    </Card>
+        )}
+      </div>
+    </div>
   );
 }

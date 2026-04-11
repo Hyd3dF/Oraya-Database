@@ -1,12 +1,11 @@
 "use client";
 
-import { LoaderCircle, Plus, Redo2, Save, Undo2 } from "lucide-react";
+import { LoaderCircle, Plus, Table2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { ColumnRow } from "@/components/schema-builder/column-row";
 import { useSchemaBuilder, type SchemaBuilderMode } from "@/hooks/use-schema-builder";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,21 +37,12 @@ interface SchemaBuilderContentProps {
 
 function TableHeaderRow() {
   return (
-    <div className="sticky top-0 z-10 border-b border-slate-200 bg-[#f3f5f8] px-3 py-2">
-      <div className="grid min-w-[980px] grid-cols-[minmax(150px,1.4fr)_128px_84px_minmax(180px,1.35fr)_72px_72px_72px_36px] gap-2">
-        {[
-          "Column",
-          "Type",
-          "Length",
-          "Default",
-          "PK",
-          "Unique",
-          "Required",
-          "",
-        ].map((label, index) => (
+    <div className="flex h-9 items-center border-b border-zinc-800/60 bg-white/5 px-4">
+      <div className="grid w-full grid-cols-[1fr_120px_80px_1fr_60px_60px_60px_40px] gap-2">
+        {["Column", "Type", "Length", "Default", "PK", "Unique", "Null", ""].map((label, index) => (
           <div
             key={`${label}-${index}`}
-            className="text-[9px] font-semibold uppercase tracking-[0.14em] text-muted-foreground"
+            className="text-[10px] font-medium uppercase tracking-wider text-zinc-500"
           >
             {label}
           </div>
@@ -76,21 +66,16 @@ function SchemaBuilderContent({
     validationErrors,
     errorsByColumnId,
     primaryKeyCount,
-    canUndo,
-    canRedo,
     updateTableName,
     addColumn,
     removeColumn,
     updateColumn,
-    undo,
-    redo,
   } = useSchemaBuilder({
     mode,
     initialDefinition,
   });
 
-  const modeLabel = mode === "create" ? "Create table" : "Edit table";
-  const badgeLabel = mode === "create" ? "New table" : "Editing";
+  const modeLabel = mode === "create" ? "New Table" : "Edit Table";
   const tableNameError = validationErrors.find((error) => error.field === "tableName")?.message;
   const generalErrors = validationErrors.filter(
     (error) => !error.columnId && error.field !== "tableName",
@@ -98,7 +83,7 @@ function SchemaBuilderContent({
 
   async function handleSubmit() {
     if (validationErrors.length > 0) {
-      toast.error("Resolve the validation issues before saving.");
+      toast.error("Resolve the issues before saving.");
       return;
     }
 
@@ -127,106 +112,79 @@ function SchemaBuilderContent({
       };
 
       if (!response.ok) {
-        throw new Error(payload.error ?? "Unable to save schema changes.");
+        throw new Error(payload.error ?? "Unable to save.");
       }
 
       const nextTableName = payload.tableName ?? sanitizedDefinition.tableName;
       toast.success(
         mode === "create"
-          ? `${nextTableName} was created successfully.`
-          : `${nextTableName} was updated successfully.`,
+          ? `${nextTableName} created.`
+          : `${nextTableName} updated.`,
       );
       onOpenChange(false);
       onSaved(nextTableName);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to save schema changes.");
+      toast.error(error instanceof Error ? error.message : "Unable to save.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <DialogContent className="flex h-[88vh] max-w-[1240px] flex-col overflow-hidden rounded-[22px] border border-white/85 bg-white/96 p-0 shadow-[0_36px_120px_-56px_rgba(15,23,42,0.45)] backdrop-blur-2xl">
-      <DialogHeader className="shrink-0 gap-3 border-b border-slate-200/80 px-4 py-4">
-        <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
-          <div className="space-y-2">
-            <Badge className="w-fit rounded-md bg-primary/10 px-2.5 py-1 text-[10px] text-primary hover:bg-primary/10">
-              {badgeLabel}
-            </Badge>
-            <div className="space-y-1">
-              <DialogTitle className="text-[20px] font-semibold tracking-[-0.03em] text-foreground">
-                {modeLabel}
-              </DialogTitle>
-              <DialogDescription className="max-w-3xl text-[12px] leading-5 text-muted-foreground">
-                Define the table in a dense spreadsheet-style editor, then persist the schema directly to PostgreSQL.
-              </DialogDescription>
-            </div>
+    <DialogContent className="flex h-[85vh] max-w-5xl flex-col overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/95 p-0 shadow-xl shadow-black/20 [&>button]:hidden">
+      <DialogHeader className="shrink-0 border-b border-zinc-800/60 bg-zinc-900/95 px-6 py-5">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/5">
+            <Table2 className="h-4 w-4 text-zinc-400" />
           </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!canUndo || isSubmitting}
-              onClick={undo}
-              className="h-8 rounded-lg border-slate-200 bg-white px-3 text-[11px]"
-            >
-              <Undo2 className="h-3.5 w-3.5" />
-              Undo
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={!canRedo || isSubmitting}
-              onClick={redo}
-              className="h-8 rounded-lg border-slate-200 bg-white px-3 text-[11px]"
-            >
-              <Redo2 className="h-3.5 w-3.5" />
-              Redo
-            </Button>
+          <div>
+            <DialogTitle className="text-base font-semibold text-zinc-100">
+              {modeLabel}
+            </DialogTitle>
+            <DialogDescription className="text-xs text-zinc-500">
+              Define columns and constraints for your table.
+            </DialogDescription>
           </div>
         </div>
 
-        <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-end">
-          <div className="space-y-1">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-              Table name
-            </p>
+        <div className="mt-5 flex items-center gap-4">
+          <div className="flex-1 space-y-1">
+            <label className="text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+              Table Name
+            </label>
             <Input
               value={definition.tableName}
               onChange={(event) => updateTableName(event.target.value)}
               placeholder="users"
-              className="h-9 max-w-sm rounded-lg border-slate-200 bg-white px-3 text-[12px] font-medium shadow-none"
+              className="h-9 rounded-lg border border-zinc-800 bg-white/5 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50"
             />
-            {tableNameError ? (
-              <p className="text-[10px] text-destructive">{tableNameError}</p>
-            ) : null}
+            {tableNameError && (
+              <p className="text-[10px] text-red-400">{tableNameError}</p>
+            )}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="rounded-md px-2.5 py-1 text-[10px]">
+          <div className="flex items-center gap-2 pt-5">
+            <span className="rounded-md border border-zinc-800 bg-white/5 px-2.5 py-1 text-xs text-zinc-500">
               {sanitizedDefinition.columns.length} columns
-            </Badge>
+            </span>
             <Button
               type="button"
               onClick={addColumn}
               disabled={isSubmitting}
-              className="h-9 rounded-lg px-3.5 text-[11px] shadow-[0_18px_28px_-20px_rgba(0,122,255,0.45)]"
+              className="h-9 rounded-lg bg-white text-sm font-medium text-zinc-900 hover:bg-zinc-200 disabled:opacity-50"
             >
-              <Plus className="h-3.5 w-3.5" />
-              Add column
+              <Plus className="mr-1.5 h-4 w-4" />
+              Add Column
             </Button>
           </div>
         </div>
       </DialogHeader>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        <div className="min-w-[980px]">
+        <div className="min-w-[900px]">
           <TableHeaderRow />
 
-          <div className="bg-white">
+          <div className="bg-zinc-900/95">
             {definition.columns.map((column) => (
               <ColumnRow
                 key={column.id}
@@ -238,53 +196,54 @@ function SchemaBuilderContent({
               />
             ))}
 
-            {generalErrors.length > 0 ? (
-              <div className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800">
+            {generalErrors.length > 0 && (
+              <div className="border-t border-zinc-800/60 bg-white/5 px-4 py-2 text-xs text-red-400">
                 {generalErrors.map((error) => error.message).join(" ")}
               </div>
-            ) : null}
+            )}
           </div>
         </div>
       </div>
 
-      <DialogFooter className="shrink-0 border-t border-slate-200/80 px-4 py-3">
-        <div className="flex w-full flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+      <DialogFooter className="shrink-0 border-t border-zinc-800/60 bg-zinc-900/95 px-6 py-4">
+        <div className="flex w-full items-center justify-between">
           <div className="space-y-1">
-            <p className="text-[11px] text-muted-foreground">
-              {validationErrors.length === 0
-                ? `${sanitizedDefinition.columns.length} columns are ready to save.`
-                : `${validationErrors.length} validation fields still need attention.`}
+            <p className="text-xs text-zinc-500">
+              {validationErrors.length === 0 ? (
+                <span className="text-zinc-400">{sanitizedDefinition.columns.length} columns ready</span>
+              ) : (
+                <span className="text-red-400">{validationErrors.length} issues need attention</span>
+              )}
             </p>
-            {primaryKeyCount > 1 ? (
-              <p className="text-[10px] text-amber-700">
-                Multiple primary-key columns will be saved as a composite key.
+            {primaryKeyCount > 1 && (
+              <p className="text-[10px] text-amber-400">
+                Multiple primary keys will be saved as a composite key.
               </p>
-            ) : null}
+            )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <Button
+          <div className="flex items-center gap-2">
+            <button
               type="button"
-              variant="outline"
               onClick={() => onOpenChange(false)}
               disabled={isSubmitting}
-              className="h-8 rounded-lg border-slate-200 bg-white px-3 text-[11px]"
+              className="flex h-9 items-center gap-1.5 rounded-lg border border-zinc-800 bg-white/5 px-4 text-sm text-zinc-400 transition-colors hover:bg-white/10 hover:text-zinc-200"
             >
               Cancel
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={() => void handleSubmit()}
               disabled={validationErrors.length > 0 || isSubmitting}
-              className="h-8 rounded-lg px-3 text-[11px] shadow-[0_18px_28px_-20px_rgba(0,122,255,0.45)]"
+              className="flex h-9 items-center gap-1.5 rounded-lg bg-white px-4 text-sm font-medium text-zinc-900 transition-colors hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? (
-                <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+                <LoaderCircle className="h-4 w-4 animate-spin" />
               ) : (
-                <Save className="h-3.5 w-3.5" />
+                <Plus className="h-4 w-4" />
               )}
-              Save
-            </Button>
+              Save Table
+            </button>
           </div>
         </div>
       </DialogFooter>
