@@ -81,7 +81,7 @@ function getEncryptionKey() {
   return createHash("sha256").update(secret).digest();
 }
 
-function encryptPayload(payload: ConnectionInput) {
+export function encryptConnectionPayload(payload: ConnectionInput) {
   const iv = randomBytes(12);
   const cipher = createCipheriv("aes-256-gcm", getEncryptionKey(), iv);
   const encrypted = Buffer.concat([
@@ -93,7 +93,7 @@ function encryptPayload(payload: ConnectionInput) {
   return Buffer.concat([iv, authTag, encrypted]).toString("base64url");
 }
 
-function decryptPayload(value: string): ConnectionInput | null {
+export function decryptConnectionPayload(value: string): ConnectionInput | null {
   try {
     const decoded = Buffer.from(value, "base64url");
     const iv = decoded.subarray(0, 12);
@@ -471,7 +471,7 @@ export async function getConnectionConfigFromCookies() {
     return null;
   }
 
-  return decryptPayload(encrypted);
+  return decryptConnectionPayload(encrypted);
 }
 
 export async function saveConnectionConfigToCookies(
@@ -491,7 +491,7 @@ export async function saveConnectionConfigToCookies(
     "http";
   const shouldUseSecureCookies = requestProtocol === "https";
   const cookieStore = await cookies();
-  cookieStore.set(CONNECTION_COOKIE_NAME, encryptPayload(config), {
+  cookieStore.set(CONNECTION_COOKIE_NAME, encryptConnectionPayload(config), {
     httpOnly: true,
     sameSite: "lax",
     secure: shouldUseSecureCookies,
@@ -503,6 +503,16 @@ export async function saveConnectionConfigToCookies(
 export async function clearConnectionConfigCookie() {
   const cookieStore = await cookies();
   cookieStore.delete(CONNECTION_COOKIE_NAME);
+}
+
+async function requireStoredConnectionConfig() {
+  const config = await getConnectionConfigFromCookies();
+
+  if (!config) {
+    throw new Error("You must establish a database connection first.");
+  }
+
+  return config;
 }
 
 export async function pingConnection(config: ConnectionInput) {
@@ -555,26 +565,25 @@ export async function getConnectionStatus(): Promise<ConnectionStatus> {
   }
 }
 
+export async function queryWithConnection<T extends QueryResultRow>(
+  config: ConnectionInput,
+  queryText: string,
+  values: unknown[] = [],
+) {
+  return withPoolClient(config, async (client) => client.query<T>(queryText, values));
+}
+
 export async function queryWithStoredConnection<T extends QueryResultRow>(
   queryText: string,
   values: unknown[] = [],
 ) {
-  const config = await getConnectionConfigFromCookies();
-
-  if (!config) {
-    throw new Error("You must establish a database connection first.");
-  }
-
-  return withPoolClient(config, async (client) => client.query<T>(queryText, values));
+  return queryWithConnection<T>(await requireStoredConnectionConfig(), queryText, values);
 }
 
-export async function executeStatementsWithStoredConnection(statements: string[]) {
-  const config = await getConnectionConfigFromCookies();
-
-  if (!config) {
-    throw new Error("You must establish a database connection first.");
-  }
-
+export async function executeStatementsWithConnection(
+  config: ConnectionInput,
+  statements: string[],
+) {
   return withPoolClient(config, async (client) => {
     await client.query("BEGIN");
 
@@ -589,6 +598,10 @@ export async function executeStatementsWithStoredConnection(statements: string[]
       throw error;
     }
   });
+}
+
+export async function executeStatementsWithStoredConnection(statements: string[]) {
+  return executeStatementsWithConnection(await requireStoredConnectionConfig(), statements);
 }
 
 export async function executeSql(statement: string) {
@@ -742,9 +755,12 @@ export async function listTables() {
   }));
 }
 
-export async function getTableSchema(tableName: string): Promise<TableSchema> {
+export async function getTableSchemaForConnection(
+  config: ConnectionInput,
+  tableName: string,
+): Promise<TableSchema> {
   const safeTableName = assertSafeIdentifier(tableName);
-  const result = await queryWithStoredConnection<{
+  const result = await queryWithConnection<{
     column_name: string;
     formatted_type: string;
     is_not_null: boolean;
@@ -753,6 +769,7 @@ export async function getTableSchema(tableName: string): Promise<TableSchema> {
     unique_constraint_name: string | null;
     primary_key_constraint_name: string | null;
   }>(
+    config,
     `
       SELECT
         a.attname AS column_name,
@@ -799,6 +816,10 @@ export async function getTableSchema(tableName: string): Promise<TableSchema> {
     [PUBLIC_SCHEMA, safeTableName],
   );
 
+  if (result.rows.length === 0) {
+    throw new Error(`Table "${safeTableName}" was not found.`);
+  }
+
   const columns = result.rows.map<TableColumnDefinition>((row) => {
     const defaultValue = normalizeDefaultValue(row.default_value);
     const normalizedType = normalizePgType(row.formatted_type, row.default_value);
@@ -826,6 +847,10 @@ export async function getTableSchema(tableName: string): Promise<TableSchema> {
   };
 }
 
+export async function getTableSchema(tableName: string): Promise<TableSchema> {
+  return getTableSchemaForConnection(await requireStoredConnectionConfig(), tableName);
+}
+
 function parsePositiveInteger(value: string | null, fallback: number) {
   const parsed = value ? Number.parseInt(value, 10) : fallback;
 
@@ -846,7 +871,8 @@ export function getPagingParams(searchParams: URLSearchParams) {
   };
 }
 
-export async function getTableData(
+export async function getTableDataForConnection(
+  config: ConnectionInput,
   tableName: string,
   optionsOrLimit: { limit: number; offset: number } | number,
   maybeOffset?: number,
@@ -862,10 +888,12 @@ export async function getTableData(
       : optionsOrLimit;
 
   const [countResult, rowResult] = await Promise.all([
-    queryWithStoredConnection<{ total_count: string }>(
+    queryWithConnection<{ total_count: string }>(
+      config,
       `SELECT COUNT(*)::text AS total_count FROM ${tableReference}`,
     ),
-    queryWithStoredConnection<Record<string, unknown>>(
+    queryWithConnection<Record<string, unknown>>(
+      config,
       `SELECT * FROM ${tableReference} ORDER BY 1 LIMIT $1 OFFSET $2`,
       [options.limit, options.offset],
     ),
@@ -878,5 +906,212 @@ export async function getTableData(
     totalCount: Number.parseInt(countResult.rows[0]?.total_count ?? "0", 10),
     limit: options.limit,
     offset: options.offset,
+  };
+}
+
+export async function getTableData(
+  tableName: string,
+  optionsOrLimit: { limit: number; offset: number } | number,
+  maybeOffset?: number,
+): Promise<TableDataPage> {
+  return getTableDataForConnection(
+    await requireStoredConnectionConfig(),
+    tableName,
+    optionsOrLimit,
+    maybeOffset,
+  );
+}
+
+function isInsertableRow(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+export async function insertRowsForConnection(
+  config: ConnectionInput,
+  tableName: string,
+  rows: Record<string, unknown>[],
+) {
+  const safeTableName = assertSafeIdentifier(tableName);
+
+  if (rows.length === 0) {
+    throw new Error("At least one row is required.");
+  }
+
+  if (!rows.every(isInsertableRow)) {
+    throw new Error("Each row must be a JSON object.");
+  }
+
+  const firstRowKeys = Object.keys(rows[0]);
+
+  if (firstRowKeys.length === 0) {
+    throw new Error("At least one column value is required.");
+  }
+
+  const normalizedColumnKeys = firstRowKeys.map((key) => assertSafeIdentifier(key));
+  const tableSchema = await getTableSchemaForConnection(config, safeTableName);
+  const schemaColumns = new Set(tableSchema.columns.map((column) => column.name));
+
+  for (const columnKey of normalizedColumnKeys) {
+    if (!schemaColumns.has(columnKey)) {
+      throw new Error(`Column "${columnKey}" was not found in "${safeTableName}".`);
+    }
+  }
+
+  rows.forEach((row, rowIndex) => {
+    const rowKeys = Object.keys(row);
+
+    if (rowKeys.length !== firstRowKeys.length) {
+      throw new Error(`Row ${rowIndex + 1} must use the same columns as the first row.`);
+    }
+
+    const normalizedRowKeys = rowKeys.map((key) => assertSafeIdentifier(key)).sort();
+    const normalizedFirstKeys = [...normalizedColumnKeys].sort();
+
+    if (normalizedRowKeys.some((key, keyIndex) => key !== normalizedFirstKeys[keyIndex])) {
+      throw new Error(`Row ${rowIndex + 1} must use the same columns as the first row.`);
+    }
+  });
+
+  const tableReference = `${quoteIdentifier(PUBLIC_SCHEMA)}.${quoteIdentifier(safeTableName)}`;
+  const quotedColumns = normalizedColumnKeys.map((columnKey) => quoteIdentifier(columnKey));
+  const values: unknown[] = [];
+  const valueGroups = rows.map((row, rowIndex) => {
+    const placeholders = normalizedColumnKeys.map((columnKey, columnIndex) => {
+      values.push(row[columnKey]);
+      return `$${rowIndex * normalizedColumnKeys.length + columnIndex + 1}`;
+    });
+
+    return `(${placeholders.join(", ")})`;
+  });
+
+  const result = await queryWithConnection<Record<string, unknown>>(
+    config,
+    `
+      INSERT INTO ${tableReference} (${quotedColumns.join(", ")})
+      VALUES ${valueGroups.join(", ")}
+      RETURNING *
+    `,
+    values,
+  );
+
+  return {
+    tableName: safeTableName,
+    insertedCount: result.rowCount ?? result.rows.length,
+    rows: result.rows,
+  };
+}
+
+export async function updateRowsForConnection(
+  config: ConnectionInput,
+  tableName: string,
+  searchParams: URLSearchParams,
+  body: unknown,
+) {
+  const safeTableName = assertSafeIdentifier(tableName);
+  
+  if (!isInsertableRow(body)) {
+    throw new Error("Update payload must be a JSON object.");
+  }
+  
+  const updateKeys = Object.keys(body);
+  if (updateKeys.length === 0) {
+    throw new Error("At least one column value is required to update.");
+  }
+  
+  const tableSchema = await getTableSchemaForConnection(config, safeTableName);
+  const schemaColumns = new Set(tableSchema.columns.map((col) => col.name));
+  
+  const normalizedUpdateKeys = updateKeys.map((key) => assertSafeIdentifier(key));
+  for (const col of normalizedUpdateKeys) {
+    if (!schemaColumns.has(col)) {
+      throw new Error(`Column "${col}" was not found in "${safeTableName}".`);
+    }
+  }
+  
+  const whereConditions: string[] = [];
+  const queryValues: unknown[] = [];
+  
+  searchParams.forEach((value, key) => {
+    if (key === "limit" || key === "offset") return;
+    const safeKey = assertSafeIdentifier(key);
+    if (!schemaColumns.has(safeKey)) {
+      throw new Error(`Filter column "${key}" was not found in "${safeTableName}".`);
+    }
+    queryValues.push(value);
+    whereConditions.push(`${quoteIdentifier(safeKey)} = $${queryValues.length}`);
+  });
+  
+  if (whereConditions.length === 0) {
+    throw new Error("At least one filter (e.g. ?id=5) is required for update.");
+  }
+  
+  const setClauses: string[] = [];
+  normalizedUpdateKeys.forEach((key) => {
+    queryValues.push(body[key]);
+    setClauses.push(`${quoteIdentifier(key)} = $${queryValues.length}`);
+  });
+  
+  const tableReference = `${quoteIdentifier(PUBLIC_SCHEMA)}.${quoteIdentifier(safeTableName)}`;
+  
+  const result = await queryWithConnection<Record<string, unknown>>(
+    config,
+    `
+      UPDATE ${tableReference}
+      SET ${setClauses.join(", ")}
+      WHERE ${whereConditions.join(" AND ")}
+      RETURNING *
+    `,
+    queryValues,
+  );
+  
+  return {
+    tableName: safeTableName,
+    updatedCount: result.rowCount ?? result.rows.length,
+    rows: result.rows,
+  };
+}
+
+export async function deleteRowsForConnection(
+  config: ConnectionInput,
+  tableName: string,
+  searchParams: URLSearchParams,
+) {
+  const safeTableName = assertSafeIdentifier(tableName);
+  const tableSchema = await getTableSchemaForConnection(config, safeTableName);
+  const schemaColumns = new Set(tableSchema.columns.map((col) => col.name));
+  
+  const whereConditions: string[] = [];
+  const queryValues: unknown[] = [];
+  
+  searchParams.forEach((value, key) => {
+    if (key === "limit" || key === "offset") return;
+    const safeKey = assertSafeIdentifier(key);
+    if (!schemaColumns.has(safeKey)) {
+      throw new Error(`Filter column "${key}" was not found in "${safeTableName}".`);
+    }
+    queryValues.push(value);
+    whereConditions.push(`${quoteIdentifier(safeKey)} = $${queryValues.length}`);
+  });
+  
+  if (whereConditions.length === 0) {
+    throw new Error("At least one filter (e.g. ?id=5) is required for delete.");
+  }
+  
+  const tableReference = `${quoteIdentifier(PUBLIC_SCHEMA)}.${quoteIdentifier(safeTableName)}`;
+  
+  const result = await queryWithConnection<Record<string, unknown>>(
+    config,
+    `
+      DELETE FROM ${tableReference}
+      WHERE ${whereConditions.join(" AND ")}
+      RETURNING *
+    `,
+    queryValues,
+  );
+  
+  return {
+    tableName: safeTableName,
+    deletedCount: result.rowCount ?? result.rows.length,
+    rows: result.rows,
   };
 }

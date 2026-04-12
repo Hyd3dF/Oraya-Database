@@ -10,10 +10,11 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Database, LoaderCircle, Pencil, Plus, Trash2, Table2 } from "lucide-react";
+import { Database, LoaderCircle, Pencil, Plus, Trash2, Code2 } from "lucide-react";
 
 import { DataTable } from "@/components/data-table";
 import { SchemaBuilderDialog } from "@/components/schema-builder/schema-builder-dialog";
+import { TableEndpointPanel } from "@/components/table-endpoint-panel";
 import { TableList, type TableListItem } from "@/components/table-list";
 import {
   AlertDialog,
@@ -27,6 +28,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useConnection } from "@/hooks/use-connection";
 import type { ConnectionStatus } from "@/lib/shared";
 import type { TableDefinition } from "@/lib/sql-generator";
@@ -100,6 +108,7 @@ export default function DashboardPage() {
   const [isLoadingTables, setIsLoadingTables] = useState(true);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
+  const [isApiDetailsOpen, setIsApiDetailsOpen] = useState(false);
   const [builderMode, setBuilderMode] = useState<BuilderMode>("create");
   const [builderInitialDefinition, setBuilderInitialDefinition] = useState<TableDefinition | null>(null);
   const [deleteTableName, setDeleteTableName] = useState<string | null>(null);
@@ -342,8 +351,14 @@ export default function DashboardPage() {
             Insert Row
           </ToolbarButton>
 
+          <div className="mx-1 h-5 w-px bg-zinc-800" />
+
           {selectedDefinition && (
             <>
+              <ToolbarButton onClick={() => setIsApiDetailsOpen(true)}>
+                <Code2 className="h-3.5 w-3.5" />
+                API Details
+              </ToolbarButton>
               <div className="mx-1 h-5 w-px bg-zinc-800" />
               <ToolbarButton onClick={openEditDialog}>
                 <Pencil className="h-3.5 w-3.5" />
@@ -375,32 +390,32 @@ export default function DashboardPage() {
               setSelectedTableName(tableName);
             }}
             onCreateTable={openCreateDialog}
-            onDeleteTable={(tableName) => {
-              setDeleteTableName(tableName);
-              setDeleteConfirmation("");
-            }}
           />
         </div>
 
         <div className="flex flex-1 flex-col overflow-hidden">
           {selectedDefinition ? (
-            <DataTable
-              dataColumns={dataColumns}
-              dataRows={tableData?.rows ?? []}
-              selectedRows={selectedRows}
-              onToggleRow={toggleRowSelection}
-              onToggleAllRows={toggleAllRows}
-              offset={tableData?.offset ?? 0}
-              totalCount={tableData?.totalCount ?? 0}
-              limit={tableData?.limit ?? 100}
-              isLoadingDetails={isLoadingDetails}
-              onPrevPage={() =>
-                setOffset((current) => Math.max(current - (tableData?.limit ?? 100), 0))
-              }
-              onNextPage={() =>
-                setOffset((current) => current + (tableData?.limit ?? 100))
-              }
-            />
+            <>
+              <div className="min-h-0 flex-1 overflow-hidden">
+                <DataTable
+                  dataColumns={dataColumns}
+                  dataRows={tableData?.rows ?? []}
+                  selectedRows={selectedRows}
+                  onToggleRow={toggleRowSelection}
+                  onToggleAllRows={toggleAllRows}
+                  offset={tableData?.offset ?? 0}
+                  totalCount={tableData?.totalCount ?? 0}
+                  limit={tableData?.limit ?? 100}
+                  isLoadingDetails={isLoadingDetails}
+                  onPrevPage={() =>
+                    setOffset((current) => Math.max(current - (tableData?.limit ?? 100), 0))
+                  }
+                  onNextPage={() =>
+                    setOffset((current) => current + (tableData?.limit ?? 100))
+                  }
+                />
+              </div>
+            </>
           ) : (
             <div className="flex flex-1 flex-col items-center justify-center bg-zinc-900/40">
               <div className="text-center">
@@ -482,6 +497,28 @@ export default function DashboardPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Sheet open={isApiDetailsOpen} onOpenChange={setIsApiDetailsOpen}>
+        <SheetContent className="w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl overflow-y-auto border-l border-zinc-800/60 bg-zinc-950 p-0 text-zinc-200 shadow-2xl">
+          <SheetHeader className="p-6 border-b border-zinc-800/60 bg-zinc-900/40 sticky top-0 z-10 backdrop-blur-md">
+            <SheetTitle className="text-lg font-semibold text-white flex items-center gap-2">
+              <Code2 className="h-5 w-5 text-zinc-400" />
+              API Details
+            </SheetTitle>
+            <SheetDescription className="text-zinc-400">
+              Integration endpoints and connection details for <strong className="text-zinc-200">{selectedDefinition?.tableName}</strong>.
+            </SheetDescription>
+          </SheetHeader>
+          <div className="p-6 pt-0">
+            {selectedDefinition && (
+              <TableEndpointPanel
+                tableName={selectedDefinition.tableName}
+                columns={selectedDefinition.columns}
+              />
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

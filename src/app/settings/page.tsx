@@ -1,6 +1,7 @@
 import { Plug2, ShieldCheck, Wifi } from "lucide-react";
 
 import { ConnectionForm } from "@/components/connection-form";
+import { LogoutButton } from "@/components/logout-button";
 import { getConnectionConfigFromCookies, getConnectionStatus } from "@/lib/db";
 
 const features = [
@@ -34,9 +35,12 @@ export default async function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-12">
-      <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-zinc-100 tracking-tight">Database Connection</h1>
-        <p className="mt-1.5 text-sm text-zinc-500">Connect to your PostgreSQL database.</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-zinc-100 tracking-tight">Database Connection</h1>
+          <p className="mt-1.5 text-sm text-zinc-500">Connect to your PostgreSQL database.</p>
+        </div>
+        <LogoutButton />
       </div>
 
       <div className="overflow-hidden rounded-xl border border-zinc-800/60 bg-zinc-900/40 shadow-xl shadow-black/20">

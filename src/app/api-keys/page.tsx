@@ -22,10 +22,9 @@ interface ApiKeyRowProps {
   apiKey: ApiKeyRecord;
   isNew?: boolean;
   onDeleted?: (id: string) => void;
-  onUpdated?: (nextKey: ApiKeyRecord) => void;
 }
 
-function ApiKeyRow({ apiKey, isNew, onDeleted, onUpdated }: ApiKeyRowProps) {
+function ApiKeyRow({ apiKey, isNew, onDeleted }: ApiKeyRowProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showKey, setShowKey] = useState(false);
 
@@ -67,6 +66,11 @@ function ApiKeyRow({ apiKey, isNew, onDeleted, onUpdated }: ApiKeyRowProps) {
         <div className="min-w-0">
           <p className="text-sm font-medium text-zinc-200 truncate">{apiKey.name}</p>
           <p className="text-xs text-zinc-500">{formatDate(apiKey.created_at)}</p>
+          {(apiKey.connection_host || apiKey.connection_database) && (
+            <p className="mt-1 truncate text-[11px] text-zinc-600">
+              {apiKey.connection_host ?? "host"} / {apiKey.connection_database ?? "database"}
+            </p>
+          )}
         </div>
       </div>
 
@@ -164,6 +168,10 @@ export default function ApiKeysPage() {
       </div>
 
       <div className="mb-8">
+        <div className="mb-4 rounded-xl border border-sky-500/15 bg-sky-500/10 px-4 py-3 text-xs leading-5 text-sky-100/90">
+          API keys are now bound to the PostgreSQL connection that is active when you create them. After creating a key, open any table in the dashboard to copy its live endpoint URL.
+        </div>
+
         <div className="flex items-center gap-2.5">
           <Input
             value={newKeyName}
@@ -218,9 +226,6 @@ export default function ApiKeysPage() {
                     setApiKeys((current) => current.filter((item) => item.id !== id));
                     if (newlyCreatedId === id) setNewlyCreatedId(null);
                   }}
-                  onUpdated={(nextKey) =>
-                    setApiKeys((current) => current.map((item) => (item.id === nextKey.id ? nextKey : item)))
-                  }
                 />
               </div>
             ))}

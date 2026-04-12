@@ -7,6 +7,7 @@ import {
   getApiKeyById,
   updateApiKeyActiveStatus,
 } from "@/lib/api-keys-db";
+import { getConnectionConfigFromCookies, pingConnection } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -34,7 +35,15 @@ export async function POST(request: Request) {
       return errorResponse("Key name is required.");
     }
 
-    return NextResponse.json(createApiKey(name), { status: 201 });
+    const connection = await getConnectionConfigFromCookies();
+
+    if (!connection) {
+      return errorResponse("Connect to a PostgreSQL database before creating an API key.");
+    }
+
+    await pingConnection(connection);
+
+    return NextResponse.json(createApiKey(name, connection), { status: 201 });
   } catch (error) {
     return errorResponse(
       error instanceof Error ? error.message : "Failed to create API key.",

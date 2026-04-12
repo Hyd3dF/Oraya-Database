@@ -16,7 +16,6 @@ interface TableListProps {
   selectedTableName: string;
   onSelectTable: (tableName: string) => void;
   onCreateTable: () => void;
-  onDeleteTable: (tableName: string) => void;
   className?: string;
 }
 
@@ -25,7 +24,6 @@ export function TableList({
   selectedTableName,
   onSelectTable,
   onCreateTable,
-  onDeleteTable,
   className,
 }: TableListProps) {
   return (

@@ -4,12 +4,20 @@ import fs from "node:fs";
 import { v4 as uuidv4 } from "uuid";
 import { randomBytes } from "node:crypto";
 
+import {
+  decryptConnectionPayload,
+  encryptConnectionPayload,
+  type ConnectionInput,
+} from "@/lib/db";
+
 export interface ApiKeyRecord {
   id: string;
   key: string;
   name: string;
   is_active: boolean;
   created_at: string;
+  connection_host?: string | null;
+  connection_database?: string | null;
 }
 
 interface ApiKeyRow {
@@ -18,7 +26,16 @@ interface ApiKeyRow {
   name: string;
   is_active: number;
   created_at: string;
+  connection_payload?: string | null;
+  connection_host?: string | null;
+  connection_database?: string | null;
 }
+
+type ApiKeyAccessResult =
+  | { state: "missing" }
+  | { state: "inactive"; apiKey: ApiKeyRecord }
+  | { state: "unbound"; apiKey: ApiKeyRecord }
+  | { state: "ready"; apiKey: ApiKeyRecord; connection: ConnectionInput };
 
 const DATA_DIR = path.join(process.cwd(), "data");
 const DB_PATH = path.join(DATA_DIR, "api-keys.db");
@@ -40,31 +57,79 @@ db.exec(`
   )
 `);
 
+function ensureColumn(columnName: string, definition: string) {
+  const columns = db.prepare("PRAGMA table_info(api_keys)").all() as Array<{ name: string }>;
+
+  if (columns.some((column) => column.name === columnName)) {
+    return;
+  }
+
+  db.exec(`ALTER TABLE api_keys ADD COLUMN ${columnName} ${definition}`);
+}
+
+ensureColumn("connection_payload", "TEXT");
+ensureColumn("connection_host", "TEXT");
+ensureColumn("connection_database", "TEXT");
+
+function mapApiKeyRow(row: ApiKeyRow): ApiKeyRecord {
+  return {
+    id: row.id,
+    key: row.key,
+    name: row.name,
+    is_active: Boolean(row.is_active),
+    created_at: row.created_at,
+    connection_host: row.connection_host ?? null,
+    connection_database: row.connection_database ?? null,
+  };
+}
+
 export function getAllApiKeys(): ApiKeyRecord[] {
   const rows = db
     .prepare("SELECT * FROM api_keys ORDER BY created_at DESC")
     .all() as ApiKeyRow[];
-  return rows.map((row) => ({
-    ...row,
-    is_active: Boolean(row.is_active),
-  }));
+  return rows.map(mapApiKeyRow);
 }
 
-export function createApiKey(name: string): ApiKeyRecord {
+export function createApiKey(name: string, connection: ConnectionInput): ApiKeyRecord {
   const id = uuidv4();
   // Generate a random key: ora_ + 32 random hex characters
   const key = `ora_${randomBytes(16).toString("hex")}`;
   const created_at = new Date().toISOString();
+  const connectionPayload = encryptConnectionPayload(connection);
   
-  db.prepare("INSERT INTO api_keys (id, key, name, is_active, created_at) VALUES (?, ?, ?, ?, ?)")
-    .run(id, key, name, 1, created_at);
-    
+  db.prepare(
+    `
+      INSERT INTO api_keys (
+        id,
+        key,
+        name,
+        is_active,
+        created_at,
+        connection_payload,
+        connection_host,
+        connection_database
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `,
+  ).run(
+    id,
+    key,
+    name,
+    1,
+    created_at,
+    connectionPayload,
+    connection.host,
+    connection.database,
+  );
+     
   return {
     id,
     key,
     name,
     is_active: true,
     created_at,
+    connection_host: connection.host,
+    connection_database: connection.database,
   };
 }
 
@@ -84,9 +149,38 @@ export function getApiKeyById(id: string): ApiKeyRecord | undefined {
     | ApiKeyRow
     | undefined;
   if (!row) return undefined;
-  
+
+  return mapApiKeyRow(row);
+}
+
+export function resolveApiKeyAccess(apiKeyValue: string): ApiKeyAccessResult {
+  const row = db.prepare("SELECT * FROM api_keys WHERE key = ?").get(apiKeyValue) as
+    | ApiKeyRow
+    | undefined;
+
+  if (!row) {
+    return { state: "missing" };
+  }
+
+  const apiKey = mapApiKeyRow(row);
+
+  if (!apiKey.is_active) {
+    return { state: "inactive", apiKey };
+  }
+
+  if (!row.connection_payload) {
+    return { state: "unbound", apiKey };
+  }
+
+  const connection = decryptConnectionPayload(row.connection_payload);
+
+  if (!connection) {
+    return { state: "unbound", apiKey };
+  }
+
   return {
-    ...row,
-    is_active: Boolean(row.is_active),
+    state: "ready",
+    apiKey,
+    connection,
   };
 }

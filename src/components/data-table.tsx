@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, type ReactNode, useEffect } from "react";
+import { useState, useRef, useCallback, type ReactNode, useEffect, useMemo } from "react";
 import { cn } from "@/lib/utils";
 
 export interface DataTableColumn {
@@ -58,7 +58,7 @@ function summarizeJson(value: Record<string, unknown> | unknown[]) {
   return `${Object.keys(value).length} fields`;
 }
 
-function renderDefaultCell(value: unknown, align: "left" | "center" | "right" = "left") {
+function renderDefaultCell(value: unknown) {
   if (value === null || value === undefined || value === "") {
     return <span className="text-xs text-zinc-600">—</span>;
   }
@@ -113,31 +113,27 @@ export function DataTable({
   onPrevPage,
   onNextPage,
 }: DataTableProps) {
-  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+  const [columnWidthOverrides, setColumnWidthOverrides] = useState<Record<string, number>>({});
+
+  const columnWidths = useMemo(() => {
     const widths: Record<string, number> = {};
+
     dataColumns.forEach((col) => {
-      widths[col.key] = col.width ?? 150;
+      widths[col.key] = columnWidthOverrides[col.key] ?? col.width ?? 150;
     });
+
     return widths;
-  });
+  }, [columnWidthOverrides, dataColumns]);
 
   const [resizing, setResizing] = useState<{ key: string; startX: number; startWidth: number } | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const widths: Record<string, number> = {};
-    dataColumns.forEach((col) => {
-      widths[col.key] = col.width ?? 150;
-    });
-    setColumnWidths(widths);
-  }, [dataColumns]);
 
   const handleMouseMove = useCallback(
     (e: MouseEvent) => {
       if (!resizing) return;
       const diff = e.clientX - resizing.startX;
       const newWidth = Math.max(MIN_COLUMN_WIDTH, resizing.startWidth + diff);
-      setColumnWidths((prev) => ({ ...prev, [resizing.key]: newWidth }));
+      setColumnWidthOverrides((prev) => ({ ...prev, [resizing.key]: newWidth }));
     },
     [resizing]
   );
@@ -204,7 +200,7 @@ export function DataTable({
             align === "right" && "text-right"
           )}
         >
-          {col.render ? col.render(value, row, rowIndex) : renderDefaultCell(value, align)}
+          {col.render ? col.render(value, row, rowIndex) : renderDefaultCell(value)}
         </div>
         {!isLast && (
           <div
