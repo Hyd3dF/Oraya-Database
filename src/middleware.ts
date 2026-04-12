@@ -51,6 +51,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const isApiRoute = pathname.startsWith("/api/");
+  const sessionCookie = request.cookies.get("oraya_session")?.value;
 
   if (!sessionCookie) {
     if (isApiRoute) {
