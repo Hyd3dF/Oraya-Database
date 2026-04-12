@@ -11,7 +11,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
     }
 
-    const user = verifyUser(username, password);
+    const normalizedUsername = username.toLowerCase().trim();
+    const user = verifyUser(normalizedUsername, password);
     
     if (!user) {
       return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });

@@ -20,7 +20,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Username and password are required" }, { status: 400 });
     }
 
-    const user = createUser(username, password);
+    const normalizedUsername = username.toLowerCase().trim();
+    const user = createUser(normalizedUsername, password);
     const token = createSessionToken(user.id);
 
     const cookieStore = await cookies();

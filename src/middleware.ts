@@ -50,18 +50,21 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const sessionCookie = request.cookies.get("oraya_session")?.value;
+  const isApiRoute = pathname.startsWith("/api/");
 
   if (!sessionCookie) {
-    // If there is no session, redirect to login page.
-    // The login page itself will redirect to /register if there are no users.
+    if (isApiRoute) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
   const isValid = await verifySessionTokenEdge(sessionCookie);
 
   if (!isValid) {
-    const response = NextResponse.redirect(new URL("/login", request.url));
+    const response = isApiRoute 
+      ? NextResponse.json({ error: "Unauthorized" }, { status: 401 }) 
+      : NextResponse.redirect(new URL("/login", request.url));
     response.cookies.delete("oraya_session");
     return response;
   }
