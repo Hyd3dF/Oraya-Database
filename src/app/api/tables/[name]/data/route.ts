@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 
 import { getPagingParams, getTableData } from "@/lib/db";
 
+export const runtime = "nodejs";
+
 function errorResponse(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }

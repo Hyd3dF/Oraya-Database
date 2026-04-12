@@ -7,6 +7,8 @@ import { Sidebar } from "@/components/sidebar";
 import { Toaster } from "@/components/ui/sonner";
 import { getConnectionStatus } from "@/lib/db";
 
+export const runtime = "nodejs";
+
 export const metadata: Metadata = {
   title: "Oraya Database",
   description: "Premium PostgreSQL Management Engine & Data Governance",

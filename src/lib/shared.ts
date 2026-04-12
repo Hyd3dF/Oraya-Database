@@ -15,12 +15,16 @@ export type PostgresDataType =
   | "serial"
   | "bigserial";
 
+export type ConnectionSslMode = "disable" | "prefer" | "require";
+
 export interface ConnectionInput {
   host: string;
   port: number;
   user: string;
   password: string;
   database: string;
+  sslMode?: ConnectionSslMode;
+  allowSelfSignedCertificates?: boolean;
 }
 
 export interface ConnectionStatus {

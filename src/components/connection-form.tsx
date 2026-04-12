@@ -5,15 +5,26 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, LoaderCircle, Plug2, RotateCcw, Unplug } from "lucide-react";
 import { toast } from "sonner";
 
-import type { ConnectionInput, ConnectionStatus } from "@/lib/shared";
+import type { ConnectionInput, ConnectionSslMode, ConnectionStatus } from "@/lib/shared";
 import { dispatchConnectionStatusChanged, useConnection } from "@/hooks/use-connection";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface ConnectionFormProps {
   initialStatus: ConnectionStatus;
-  initialValues: Pick<ConnectionInput, "host" | "port" | "user" | "database">;
+  initialValues: Pick<
+    ConnectionInput,
+    "host" | "port" | "user" | "database" | "sslMode" | "allowSelfSignedCertificates"
+  >;
 }
 
 interface ConnectionFormState {
@@ -22,7 +33,24 @@ interface ConnectionFormState {
   user: string;
   password: string;
   database: string;
+  sslMode: ConnectionSslMode;
+  allowSelfSignedCertificates: boolean;
 }
+
+const sslModeCopy: Record<ConnectionSslMode, { label: string; description: string }> = {
+  disable: {
+    label: "Disable SSL",
+    description: "Use plain TCP only.",
+  },
+  prefer: {
+    label: "Prefer SSL",
+    description: "Try SSL first, then fall back to plain TCP when possible.",
+  },
+  require: {
+    label: "Require SSL",
+    description: "Only connect over TLS/SSL.",
+  },
+};
 
 function getStatusColor(status: ConnectionStatus) {
   if (status.connected) return "bg-emerald-500";
@@ -49,6 +77,8 @@ export function ConnectionForm({
     user: initialValues.user,
     password: "",
     database: initialValues.database,
+    sslMode: initialValues.sslMode ?? "prefer",
+    allowSelfSignedCertificates: Boolean(initialValues.allowSelfSignedCertificates),
   });
 
   const hasStoredConnection =
@@ -82,6 +112,8 @@ export function ConnectionForm({
           user: form.user,
           password: form.password,
           database: form.database,
+          sslMode: form.sslMode,
+          allowSelfSignedCertificates: form.allowSelfSignedCertificates,
         }),
       });
       const payload = await response.json();
@@ -214,6 +246,60 @@ export function ConnectionForm({
             className="h-9 rounded-lg border-zinc-800 bg-zinc-900/50 text-sm text-zinc-200 placeholder:text-zinc-600 focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50"
           />
         </div>
+
+        <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+          <div className="space-y-1.5">
+            <Label className="text-xs text-zinc-400">SSL mode</Label>
+            <Select
+              value={form.sslMode}
+              onValueChange={(value) => updateField("sslMode", value as ConnectionSslMode)}
+            >
+              <SelectTrigger className="h-9 rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 text-sm text-zinc-200 shadow-none focus:border-zinc-700 focus:ring-1 focus:ring-zinc-700/50">
+                <SelectValue placeholder="Select SSL mode" />
+              </SelectTrigger>
+              <SelectContent className="rounded-lg border border-zinc-800 bg-zinc-900 shadow-xl shadow-black/20">
+                {Object.entries(sslModeCopy).map(([value, option]) => (
+                  <SelectItem
+                    key={value}
+                    value={value}
+                    className="py-2 pl-2 pr-8 text-xs text-zinc-300 focus:bg-white/10 focus:text-zinc-100"
+                  >
+                    <div className="flex flex-col gap-0.5">
+                      <span className="font-medium">{option.label}</span>
+                      <span className="text-[10px] text-zinc-500">{option.description}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <label className="flex items-center gap-3 rounded-lg border border-zinc-800 bg-zinc-900/35 px-3 py-2.5 md:min-w-[220px]">
+            <Switch
+              checked={form.allowSelfSignedCertificates}
+              disabled={form.sslMode === "disable"}
+              onCheckedChange={(checked) => updateField("allowSelfSignedCertificates", checked)}
+            />
+            <span>
+              <span className="block text-xs font-medium text-zinc-300">
+                Allow self-signed certs
+              </span>
+              <span className="block text-[11px] text-zinc-500">
+                Turns off certificate verification.
+              </span>
+            </span>
+          </label>
+        </div>
+
+        <div className="rounded-lg border border-sky-500/15 bg-sky-500/10 px-3 py-2.5 text-xs text-sky-100/85">
+          Hosted deployments connect from the server runtime, not from the browser. Private or local databases must be reachable from the deployed server, or exposed through a tunnel/VPN.
+        </div>
+
+        {status.configured && !status.connected && (status.error || status.message) && (
+          <div className="rounded-lg border border-amber-500/15 bg-amber-500/10 px-3 py-2.5 text-xs text-amber-100/90">
+            {status.error ?? status.message}
+          </div>
+        )}
       </div>
 
       <div className="mt-6 flex items-center gap-3">

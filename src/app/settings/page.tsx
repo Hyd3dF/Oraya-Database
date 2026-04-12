@@ -19,6 +19,11 @@ const features = [
     description: "Returning with a blank password keeps your existing secure password.",
     icon: Plug2,
   },
+  {
+    title: "Flexible SSL modes",
+    description: "Switch between direct TCP, preferred TLS, and required TLS for different PostgreSQL providers.",
+    icon: ShieldCheck,
+  },
 ];
 
 export default async function SettingsPage() {
@@ -43,6 +48,8 @@ export default async function SettingsPage() {
               port: config?.port ?? 5432,
               user: config?.user ?? "",
               database: config?.database ?? "",
+              sslMode: config?.sslMode ?? "prefer",
+              allowSelfSignedCertificates: config?.allowSelfSignedCertificates ?? false,
             }}
           />
         </div>

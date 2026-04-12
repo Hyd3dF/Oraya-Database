@@ -3,12 +3,13 @@ import "server-only";
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 import { cookies, headers } from "next/headers";
-import { Pool, type PoolClient, type QueryResultRow } from "pg";
+import { Pool, type PoolClient, type PoolConfig, type QueryResultRow } from "pg";
 
 import {
   assertSafeIdentifier,
   quoteIdentifier,
   type ConnectionInput,
+  type ConnectionSslMode,
   type ConnectionStatus,
   type TableColumnDefinition,
   type TableDataPage,
@@ -18,6 +19,7 @@ import {
 
 export type {
   ConnectionInput,
+  ConnectionSslMode,
   ConnectionStatus,
   PostgresDataType,
   TableColumnDefinition,
@@ -31,13 +33,27 @@ export const CONNECTION_COOKIE_NAME = "dbp_connection";
 
 const CONNECTION_COOKIE_MAX_AGE = 60 * 60 * 8;
 const DEFAULT_PAGE_SIZE = 100;
-const POOL_MAX_SIZE = 10;
+const POOL_MAX_SIZE = 3;
 const PUBLIC_SCHEMA = "public";
+const DEFAULT_CONNECTION_TIMEOUT_MILLIS = 15_000;
+const DEFAULT_SSL_MODE: ConnectionSslMode = "prefer";
 
 type PoolCache = Map<string, Pool>;
+type PoolResolutionCache = Map<string, string>;
+
+interface ConnectionCandidate {
+  id: string;
+  label: string;
+  poolConfig: PoolConfig;
+}
+
+interface PgConnectionError extends Error {
+  code?: string;
+}
 
 declare global {
   var __dbPoolCache__: PoolCache | undefined;
+  var __dbPoolResolutionCache__: PoolResolutionCache | undefined;
 }
 
 function getPoolCache(): PoolCache {
@@ -46,6 +62,14 @@ function getPoolCache(): PoolCache {
   }
 
   return globalThis.__dbPoolCache__;
+}
+
+function getPoolResolutionCache(): PoolResolutionCache {
+  if (!globalThis.__dbPoolResolutionCache__) {
+    globalThis.__dbPoolResolutionCache__ = new Map<string, string>();
+  }
+
+  return globalThis.__dbPoolResolutionCache__;
 }
 
 function getEncryptionKey() {
@@ -96,6 +120,152 @@ function requireString(value: unknown, label: string) {
   return value.trim();
 }
 
+function normalizeSslMode(value: unknown): ConnectionSslMode {
+  return value === "disable" || value === "require" || value === "prefer"
+    ? value
+    : DEFAULT_SSL_MODE;
+}
+
+function normalizeBoolean(value: unknown, defaultValue = false) {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    if (value === "true") {
+      return true;
+    }
+
+    if (value === "false") {
+      return false;
+    }
+  }
+
+  return defaultValue;
+}
+
+function fingerprintSecret(secret: string) {
+  return createHash("sha1").update(secret).digest("hex").slice(0, 12);
+}
+
+function toConnectionError(error: unknown) {
+  if (error instanceof Error) {
+    return error as PgConnectionError;
+  }
+
+  return new Error("Unknown connection error.") as PgConnectionError;
+}
+
+function wrapConnectionError(summary: string, error: unknown) {
+  const message = toConnectionError(error).message;
+  return new Error(message === summary ? summary : `${summary} (${message})`);
+}
+
+function isSslCompatibilityError(error: unknown) {
+  const { code, message } = toConnectionError(error);
+  const normalizedMessage = message.toLowerCase();
+  const normalizedCode = code?.toUpperCase();
+
+  if (
+    normalizedCode === "DEPTH_ZERO_SELF_SIGNED_CERT" ||
+    normalizedCode === "SELF_SIGNED_CERT_IN_CHAIN" ||
+    normalizedCode === "UNABLE_TO_VERIFY_LEAF_SIGNATURE" ||
+    normalizedCode === "CERT_HAS_EXPIRED" ||
+    normalizedCode === "ERR_TLS_CERT_ALTNAME_INVALID"
+  ) {
+    return true;
+  }
+
+  return [
+    "does not support ssl",
+    "self-signed certificate",
+    "unable to verify the first certificate",
+    "certificate has expired",
+    "hostname/ip does not match certificate",
+    "tls",
+    "ssl off",
+    "ssl on",
+    "pg_hba.conf entry",
+  ].some((fragment) => normalizedMessage.includes(fragment));
+}
+
+function formatConnectionError(error: unknown) {
+  const pgError = toConnectionError(error);
+  const message = pgError.message;
+  const normalizedMessage = message.toLowerCase();
+  const normalizedCode = pgError.code?.toUpperCase();
+
+  if (
+    normalizedCode === "ETIMEDOUT" ||
+    normalizedMessage.includes("connection timeout") ||
+    normalizedMessage.includes("timeout expired")
+  ) {
+    return wrapConnectionError(
+      "Connection timed out. Hosted deployments connect from the server runtime, not from the end user's browser. The database host must be reachable from that network, and its firewall or cloud rules must allow the connection.",
+      error,
+    );
+  }
+
+  if (normalizedCode === "ECONNREFUSED") {
+    return wrapConnectionError(
+      "Connection was refused. The host is reachable, but PostgreSQL is not accepting connections on this port. Check listen_addresses, port exposure, and firewalls.",
+      error,
+    );
+  }
+
+  if (normalizedCode === "ENOTFOUND" || normalizedCode === "EAI_AGAIN") {
+    return wrapConnectionError(
+      "The database host could not be resolved. Check the hostname or DNS configuration.",
+      error,
+    );
+  }
+
+  if (normalizedMessage.includes("no pg_hba.conf entry")) {
+    if (normalizedMessage.includes("ssl off")) {
+      return wrapConnectionError(
+        "The server rejected the non-SSL connection. Switch SSL mode to Prefer or Require, or update pg_hba.conf to allow non-SSL clients.",
+        error,
+      );
+    }
+
+    if (normalizedMessage.includes("ssl on")) {
+      return wrapConnectionError(
+        "The server rejected the SSL connection. Check pg_hba.conf allowlists and the server's SSL policy.",
+        error,
+      );
+    }
+
+    return wrapConnectionError(
+      "The database rejected this host, user, or database combination. Check pg_hba.conf and any IP allowlists in front of PostgreSQL.",
+      error,
+    );
+  }
+
+  if (normalizedMessage.includes("password authentication failed")) {
+    return wrapConnectionError("Authentication failed. Check the PostgreSQL username and password.", error);
+  }
+
+  if (normalizedMessage.includes('database') && normalizedMessage.includes('does not exist')) {
+    return wrapConnectionError("The target database does not exist on the server.", error);
+  }
+
+  if (normalizedMessage.includes("does not support ssl")) {
+    return wrapConnectionError(
+      "This PostgreSQL server does not support SSL. Switch SSL mode to Disable or Prefer.",
+      error,
+    );
+  }
+
+  if (isSslCompatibilityError(error)) {
+    return wrapConnectionError(
+      "SSL negotiation failed. Switch SSL mode between Prefer, Require, and Disable as needed. If the server uses a self-signed certificate, enable 'Allow self-signed certificates'.",
+      error,
+    );
+  }
+
+  return pgError;
+}
+
 export function validateConnectionInput(input: unknown): ConnectionInput {
   if (!input || typeof input !== "object") {
     throw new Error("Connection details are invalid.");
@@ -118,29 +288,47 @@ export function validateConnectionInput(input: unknown): ConnectionInput {
     throw new Error("Port must be between 1 and 65535.");
   }
 
+  const sslMode = normalizeSslMode(candidate.sslMode);
+  const allowSelfSignedCertificates = normalizeBoolean(
+    candidate.allowSelfSignedCertificates,
+    false,
+  );
+
   return {
     host,
     port,
     user,
     password,
     database,
+    sslMode,
+    allowSelfSignedCertificates,
   };
 }
 
 function serializeConnectionKey(config: ConnectionInput) {
-  return `${config.host}:${config.port}:${config.user}:${config.database}`;
+  return [
+    config.host,
+    config.port,
+    config.user,
+    config.database,
+    fingerprintSecret(config.password),
+    config.sslMode ?? DEFAULT_SSL_MODE,
+    config.allowSelfSignedCertificates ? "self-signed" : "verified",
+  ].join(":");
 }
 
-function createPool(config: ConnectionInput) {
-  const cache = getPoolCache();
-  const cacheKey = serializeConnectionKey(config);
-  const existing = cache.get(cacheKey);
+function serializeCandidateCacheKey(config: ConnectionInput, candidateId: string) {
+  return `${serializeConnectionKey(config)}:${candidateId}`;
+}
 
-  if (existing) {
-    return existing;
-  }
+function buildTlsConfig(config: ConnectionInput): PoolConfig["ssl"] {
+  return {
+    rejectUnauthorized: !config.allowSelfSignedCertificates,
+  };
+}
 
-  const pool = new Pool({
+function buildBasePoolConfig(config: ConnectionInput): PoolConfig {
+  return {
     host: config.host,
     port: config.port,
     user: config.user,
@@ -148,29 +336,131 @@ function createPool(config: ConnectionInput) {
     database: config.database,
     max: POOL_MAX_SIZE,
     idleTimeoutMillis: 30_000,
-    connectionTimeoutMillis: 5_000,
-  });
+    connectionTimeoutMillis: DEFAULT_CONNECTION_TIMEOUT_MILLIS,
+    keepAlive: true,
+  };
+}
+
+function reorderCandidates(candidates: ConnectionCandidate[], preferredId: string | undefined) {
+  if (!preferredId) {
+    return candidates;
+  }
+
+  const preferredCandidate = candidates.find((candidate) => candidate.id === preferredId);
+  if (!preferredCandidate) {
+    return candidates;
+  }
+
+  return [preferredCandidate, ...candidates.filter((candidate) => candidate.id !== preferredId)];
+}
+
+function buildConnectionCandidates(config: ConnectionInput): ConnectionCandidate[] {
+  const basePoolConfig = buildBasePoolConfig(config);
+  const sslMode = config.sslMode ?? DEFAULT_SSL_MODE;
+  const preferredCandidateId = getPoolResolutionCache().get(serializeConnectionKey(config));
+  const plainCandidate: ConnectionCandidate = {
+    id: "plain",
+    label: "non-SSL",
+    poolConfig: {
+      ...basePoolConfig,
+      ssl: false,
+    },
+  };
+  const tlsCandidate: ConnectionCandidate = {
+    id: config.allowSelfSignedCertificates ? "tls-relaxed" : "tls-verified",
+    label: config.allowSelfSignedCertificates ? "SSL (self-signed allowed)" : "SSL",
+    poolConfig: {
+      ...basePoolConfig,
+      ssl: buildTlsConfig(config),
+    },
+  };
+
+  if (sslMode === "disable") {
+    return [plainCandidate];
+  }
+
+  if (sslMode === "require") {
+    return [tlsCandidate];
+  }
+
+  return reorderCandidates([tlsCandidate, plainCandidate], preferredCandidateId);
+}
+
+function createPool(config: ConnectionInput, candidate: ConnectionCandidate) {
+  const cache = getPoolCache();
+  const cacheKey = serializeCandidateCacheKey(config, candidate.id);
+  const existing = cache.get(cacheKey);
+
+  if (existing) {
+    return existing;
+  }
+
+  const baseCacheKey = serializeConnectionKey(config);
+  const pool = new Pool(candidate.poolConfig);
 
   pool.on("error", () => {
     cache.delete(cacheKey);
+
+    if (getPoolResolutionCache().get(baseCacheKey) === candidate.id) {
+      getPoolResolutionCache().delete(baseCacheKey);
+    }
   });
 
   cache.set(cacheKey, pool);
   return pool;
 }
 
+function disposePool(config: ConnectionInput, candidate: ConnectionCandidate) {
+  const cache = getPoolCache();
+  const cacheKey = serializeCandidateCacheKey(config, candidate.id);
+  const pool = cache.get(cacheKey);
+
+  cache.delete(cacheKey);
+
+  if (getPoolResolutionCache().get(serializeConnectionKey(config)) === candidate.id) {
+    getPoolResolutionCache().delete(serializeConnectionKey(config));
+  }
+
+  if (pool) {
+    void pool.end().catch(() => undefined);
+  }
+}
+
+function shouldTryNextCandidate(error: unknown, currentIndex: number, candidateCount: number) {
+  return currentIndex < candidateCount - 1 && isSslCompatibilityError(error);
+}
+
 async function withPoolClient<T>(
   config: ConnectionInput,
   executor: (client: PoolClient) => Promise<T>,
 ) {
-  const pool = createPool(config);
-  const client = await pool.connect();
+  const candidates = buildConnectionCandidates(config);
 
-  try {
-    return await executor(client);
-  } finally {
-    client.release();
+  for (const [index, candidate] of candidates.entries()) {
+    const pool = createPool(config, candidate);
+    let client: PoolClient;
+
+    try {
+      client = await pool.connect();
+      getPoolResolutionCache().set(serializeConnectionKey(config), candidate.id);
+    } catch (error) {
+      disposePool(config, candidate);
+
+      if (!shouldTryNextCandidate(error, index, candidates.length)) {
+        throw formatConnectionError(error);
+      }
+
+      continue;
+    }
+
+    try {
+      return await executor(client);
+    } finally {
+      client.release();
+    }
   }
+
+  throw new Error("Connection could not be established.");
 }
 
 export async function getConnectionConfigFromCookies() {

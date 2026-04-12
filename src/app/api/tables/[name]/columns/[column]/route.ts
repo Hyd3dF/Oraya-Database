@@ -8,6 +8,8 @@ import {
   type TableDefinition,
 } from "@/lib/sql-generator";
 
+export const runtime = "nodejs";
+
 function errorResponse(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
 }
