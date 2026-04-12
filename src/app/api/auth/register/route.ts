@@ -24,11 +24,23 @@ export async function POST(request: Request) {
     const user = createUser(normalizedUsername, password);
     const token = createSessionToken(user.id);
 
+    const forwardedProto = request.headers.get("x-forwarded-proto");
+    const requestUrlProto = request.url ? new URL(request.url).protocol.replace(":", "") : null;
+    const originProto = request.headers.get("origin")?.split("://")[0]?.toLowerCase();
+    const refererProto = request.headers.get("referer")?.split("://")[0]?.toLowerCase();
+    const requestProtocol =
+      forwardedProto?.split(",")[0]?.trim().toLowerCase() ??
+      requestUrlProto ??
+      originProto ??
+      refererProto ??
+      "http";
+    const shouldUseSecureCookies = requestProtocol === "https";
+
     const cookieStore = await cookies();
     cookieStore.set("oraya_session", token, {
       httpOnly: true,
       sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
+      secure: shouldUseSecureCookies,
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 1 week
     });
